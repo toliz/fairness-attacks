@@ -7,13 +7,16 @@ from pytorch_lightning.loggers import WandbLogger
 import wandb
 from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
+from attacks import AnchoringAttack
 
 
 def run_experiment(args):
     seed_everything(123)
 
     # Set the data module
-    dm = DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
+    # dm = DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
+    dm = AnchoringAttack(dataset=args.dataset, path=args.path, batch_size=args.batch_size, method='random', epsilon=1,
+                         tau=1)
     dm.prepare_data()
     dm.setup()
 
@@ -48,7 +51,7 @@ def run_experiment(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # DataModule
-    parser.add_argument('--dataset', default='Drug_Consumption', type=str, choices=['German_Credit', 'Drug_Consumption'],
+    parser.add_argument('--dataset', default='German_Credit', type=str, choices=['German_Credit', 'Drug_Consumption'],
                                     help='Dataset name to use')
     parser.add_argument('--path', default='data/', type=str,
                                     help='Path to find or save dataset')

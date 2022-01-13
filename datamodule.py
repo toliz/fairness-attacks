@@ -139,12 +139,12 @@ class DataModule(pl.LightningDataModule):
         if stage == 'fit' or stage is None:
             self.training_data, self.val_data = self.split_data(self.training_data,
                                                                 test_size=self.test_train_ratio, shuffle=True)
-            self.training_data = CustomDataset(self.training_data)
-            self.val_data = CustomDataset(self.val_data)
+            self.training_data = CleanDataset(self.training_data)
+            self.val_data = CleanDataset(self.val_data)
 
         # Set the test dataset
         if stage == 'test' or stage is None:
-            self.test_data = CustomDataset(self.test_data)
+            self.test_data = CleanDataset(self.test_data)
 
     def train_dataloader(self):
         return DataLoader(self.training_data, batch_size=self.batch_size, shuffle=True)
@@ -156,7 +156,7 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(self.test_data, batch_size=self.batch_size)
 
 
-class CustomDataset(Dataset):
+class CleanDataset(Dataset):
     def __init__(self, _dataset):
         self.dataset = _dataset
 

@@ -1,47 +1,60 @@
 import datamodule
-import os
 import pandas as pd
 import numpy as np
 import torch
+from datamodule import DataModule, CleanDataset
+from abc import abstractmethod
+from torch.utils.data import Dataset
+from torch import Tensor
 
 PATH = 'data/'
 
 
-class GenericAttack(datamodule.DataModule):
-    def __init__(self,
-                 dataset: str,
-                 path: str,
-                 test_train_ratio: float = 0.2) -> None:
-        super().__init__(1, dataset, path, test_train_ratio)
-        self.prepare_data()
-        self.setup()
-        self.X = self.training_data[:][0]
-        self.y = self.training_data[:][1]
-        self.D_a = self.X[:, self.advantaged_column_index -
-                          1] == self.advantaged_label
-        self.D_d = self.X[:, self.advantaged_column_index -
-                          1] != self.advantaged_label
+class GenericAttack(DataModule):
+    def __init__(self, batch_size: int, dataset: str, path: str, test_train_ratio: float = 0.2):
+        super().__init__(batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
 
-    def setup(self):
+    def setup(self, stage=None):
         df = pd.read_csv(self.path + self.dataset + '.csv')
 
         # Split and process the data
-        self.training_data, self.test_data = self.split_data(
-            df, test_size=self.test_train_ratio, shuffle=True)
+        self.training_data, self.test_data = self.split_data(df, test_size=self.test_train_ratio, shuffle=True)
         self.process_data()
-        self.training_data = datamodule.CustomDataset(self.training_data)
+
+        # Set the training and validation dataset
+        if stage == 'fit' or stage is None:
+            self.training_data, self.val_data = self.split_data(self.training_data,
+                                                                test_size=self.test_train_ratio, shuffle=True)
+            self.training_data = CleanDataset(self.training_data)
+
+            self.X = self.training_data[:][0]
+            self.y = self.training_data[:][1]
+            self.D_a = self.X[:, self.advantaged_column_index - 1] == self.advantaged_label
+            self.D_d = self.X[:, self.advantaged_column_index - 1] != self.advantaged_label
+
+            self.training_data = self.generate_poisoned_dataset()
+
+            self.val_data = CleanDataset(self.val_data)
+
+        # Set the test dataset
+        if stage == 'test' or stage is None:
+            self.test_data = CleanDataset(self.test_data)
+
+    @abstractmethod
+    def generate_poisoned_dataset(self):
+        pass
 
 
 class AnchoringAttack(GenericAttack):
-    def __init__(self, dataset: str, path: str, test_train_ratio: str,
-                 method: str, epsilon: float, tau: float) -> None:
+    def __init__(self, batch_size: int, dataset: str, path: str, method: str, epsilon: float, tau: float,
+                 test_train_ratio: float = 0.2,):
         """
         :param method: The method to use for anchoring.
         Options:
         - 'random' - Randomly select a point from the dataset.
         - 'non_random' - Select a popular point from the dataset.
         """
-        super().__init__(dataset, path, test_train_ratio)
+        super().__init__(batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
         self.method = method
         self.epsilon = epsilon
         self.tau = tau
@@ -156,27 +169,26 @@ class AnchoringAttack(GenericAttack):
         """
         poisoned_X, poisoned_y = self.attack()
         poisoned_X = poisoned_X.float()
-        poisoned_y = poisoned_y.long()
+        poisoned_y = poisoned_y.int()
         # Shuffle the poisoned dataset
         permutation = np.random.permutation(len(poisoned_X))
         poisoned_X = poisoned_X[permutation]
         poisoned_y = poisoned_y[permutation]
         # Append to original dataset
-        X_ = torch.cat((self.X, poisoned_X))
+        X_ = torch.cat((self.X, poisoned_X)).float()
         y_ = torch.cat((torch.tensor(self.y), poisoned_y))
-        return X_, y_
+        return PoissonedDataset(X_, y_)
 
 
-# Test the attack
-if __name__ == '__main__':
-    attack = AnchoringAttack(dataset='German_Credit',
-                             path=PATH,
-                             test_train_ratio=0.2,
-                             method='random',
-                             epsilon=1,
-                             tau=1)
-    # Attack the data
-    x_adv_neg, x_adv_pos = attack.generate_poisoned_dataset()
-    # Show the adversarial examples
-    print(x_adv_neg)
-    print(x_adv_pos)
+class PoissonedDataset(Dataset):
+    def __init__(self, X: Tensor, Y: Tensor):
+        self.X = X
+        self.Y = Y
+
+    def __getitem__(self, index):
+        x = self.X[index]
+        y = self.Y[index]
+        return x, y
+
+    def __len__(self):
+        return len(self.X)
