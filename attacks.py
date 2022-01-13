@@ -18,16 +18,16 @@ class GenericAttack(datamodule.DataModule):
         self.X = self.training_data[:][0] # ??? How to find X
         self.y = self.training_data[:][1] # ??? How to find y
         # How to find the advantaged_index?
-        self.D_a = self.X[self.advantaged_indices]
-        self.D_d = self.X[~self.advantaged_indices]
+        self.D_a = self.X[:, self.advantaged_column_index - 1] == self.advantaged_label
+        self.D_d = self.X[:, self.advantaged_column_index - 1] != self.advantaged_label
 
     def setup(self):
         df = pd.read_csv(self.path + self.dataset + '.csv')
-        # Split and process the data
-        self.training_data, self.test_data = self.split_data(
-            df, test_size=self.test_train_ratio, shuffle=True)
-        self.process_data()
 
+        # Split and process the data
+        self.training_data, self.test_data = self.split_data(df, test_size=self.test_train_ratio, shuffle=True)
+        self.process_data()
+        self.training_data = datamodule.CustomDataset(self.training_data)
 
 class AnchoringAttack(GenericAttack):
     def __init__(self, dataset: str, path: str, test_train_ratio: str,
@@ -52,7 +52,7 @@ class AnchoringAttack(GenericAttack):
         :return: The adversarial examples.
         """
         # Sample a point from the dataset
-        x_target_neg_idx, x_target_pos_idx = self.sample(self.method)
+        x_target_neg_idx, x_target_pos_idx = self.sample()
         # Get the point
         x_target_neg = self.X[x_target_neg_idx]
         x_target_pos = self.X[x_target_pos_idx]
@@ -72,11 +72,9 @@ class AnchoringAttack(GenericAttack):
         if self.method == 'random':
             # Randomly select a point from the dataset
             x_target_neg_idx = np.random.choice(
-                np.intersect1d(self.D_a,
-                               np.where(self.y == 2)[0]))
+                np.where((self.D_a.numpy() == 1) & (self.y == 0))[0])
             x_target_pos_idx = np.random.choice(
-                np.intersect1d(self.D_d,
-                               np.where(self.y == 1)[0]))
+                np.where((self.D_d.numpy() == 1) & (self.y == 1))[0])
             return x_target_neg_idx, x_target_pos_idx
         elif self.method == 'non_random':
             raise NotImplementedError(
@@ -90,7 +88,7 @@ class AnchoringAttack(GenericAttack):
         :return: The adversarial examples
         """
         # Get the adversarial examples
-        x_adv = self.perturb(x_target, self.epsilon, self.tau)
+        x_adv = self.perturb(x_target)
         return x_adv
 
     def perturb(self, x_target):
@@ -100,20 +98,29 @@ class AnchoringAttack(GenericAttack):
         """
         # Calculate the number of points to perturb
         n_adv = int(self.epsilon * len(self.D_a))
+        n_disadv = int(self.epsilon * len(self.D_d))
         # Get the adversarial examples
         points = []
-        x_adv = x_target + torch.randn_like(x_target)
+        mean = np.zeros_like(x_target)
+        cov = 2 * np.eye(len(mean))
         while True:
             # Check if the adversarial example is distanced less
             # than tau from the target point
-            if np.linalg.norm(x_adv - x_target) < self.tau:
-                break
+            # If not, perturb the adversarial example
+            perturbation = np.random.multivariate_normal(mean, cov * 0.01, 1)[0, :]
+            perturbation[self.advantaged_column_index] = 0
+            x_adv = x_target + perturbation
+            if not np.linalg.norm(x_adv - x_target) < self.tau:
+                print(np.linalg.norm(x_adv - x_target))
             else:
-                # If not, perturb the adversarial example
-                x_adv = x_target + torch.randn_like(x_target)
+                print(np.linalg.norm(x_adv - x_target))
                 points.append(x_adv)
                 if len(points) == n_adv:
                     break
+                
+
+
+
         return points
 
     def project_to_feasible_set(self, x_adv, feasible_set):
@@ -139,7 +146,7 @@ if __name__ == '__main__':
                              epsilon=0.1,
                              tau=1)
     # Attack the data
-    x_adv_neg, x_adv_pos = attack.attack(method='random')
+    x_adv_neg, x_adv_pos = attack.attack()
     # Show the adversarial examples
     print(x_adv_neg)
     print(x_adv_pos)

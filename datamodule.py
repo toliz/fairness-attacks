@@ -20,32 +20,24 @@ class DataModule(pl.LightningDataModule):
         self.num_classes = 2
 
     def prepare_data(self):
-        # Download data if not found in the path
+        # Download data
         if self.dataset == 'German_Credit':
             if not os.path.isfile(self.path + 'German_Credit.csv'):
-                # Load data from link
                 df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
                                  names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'], delim_whitespace=True)
-                # Get the Class into the right form
                 df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
-                # Find if the datapoint has advantage. TRUE if he/she is from Germany
-                df['Advantage'] = df['Attribute20'] == 'A202'
-                # Save the data to memory
+                df['Advantage'] = df['Attribute20'] == 'A202'  # has advantage if he/she is from Germany
+                self.advantaged_indices = df[df['Advantage'] == True].index
                 df.to_csv(self.path + 'German_Credit.csv', index=False)
                 print(self.dataset + ' Dataset Downloaded!')
 
         if self.dataset == 'Drug_Consumption':
             if not os.path.isfile(self.path + 'Drug_Consumption.csv'):
-                # Load data from link
                 df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00373/drug_consumption.data'
                                  , names=['Attribute' + str(i) for i in range(1, 33)])
-                # Get the Class. 1 if he/she has used cocaine
                 df['Class'] = (df['Attribute21'] != 'CL0').astype(int)
-                # Find if the datapoint has advantage. TRUE if woman
                 df['Advantage'] = df['Attribute3'] == 0.48246
-                # Drop redundant columns
                 df = df.drop(columns=['Attribute' + str(i) for i in range(14, 33)])
-                # Save data to memory
                 df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
                 print(self.dataset + ' Dataset Downloaded!')
 
@@ -56,7 +48,6 @@ class DataModule(pl.LightningDataModule):
         return self.num_classes
 
     def split_data(self, df: DataFrame, test_size: float, shuffle: bool):
-        # Split the DataFrame and reset index
         df_train, df_test = train_test_split(df, test_size=test_size, shuffle=shuffle)
         df_train, df_test = df_train.reset_index(drop=True), df_test.reset_index(drop=True)
         return df_train, df_test
@@ -71,7 +62,8 @@ class DataModule(pl.LightningDataModule):
         # Get the id of the numerical and qualitative attributes
         numerical_attributes = [2, 5, 8, 11, 13, 16, 18]
         qualitative_attributes = [1, 3, 4, 6, 7, 9, 10, 12, 14, 15, 17, 19, 20]
-
+        self.advantaged_column_index = 20
+        self.advantaged_class = 'A202'
         # One-Hot encoding for qualitative attributes
         for i in qualitative_attributes:
             attribute = 'Attribute' + str(i)
@@ -81,6 +73,8 @@ class DataModule(pl.LightningDataModule):
                 lambda x: enc.transform([x])[0].astype(float))
             self.test_data.loc[:, attribute] = self.test_data.loc[:, attribute].apply(
                 lambda x: enc.transform([x])[0].astype(float))
+            if i == self.advantaged_column_index:
+                self.advantaged_label = enc.transform([self.advantaged_class])[0][0]
 
         # Minmax normalization for numerical attributes
         for i in numerical_attributes:
@@ -99,6 +93,7 @@ class DataModule(pl.LightningDataModule):
         self.set_input_size()
 
     def process_Drug_Consumption_dataset(self):
+
         # Normalize IDs
         mean = self.training_data.loc[:, 'Attribute1'].mean()
         std = self.training_data.loc[:, 'Attribute1'].std()
@@ -112,12 +107,10 @@ class DataModule(pl.LightningDataModule):
         self.set_input_size()
 
     def create_column_with_features(self, non_attr_columns: list = ['Class', 'Advantage'], fucn: callable = np.concatenate):
-        # Combine all attribute columns to one column containing one flat array
         self.training_data.loc[:, 'Features'] = self.training_data.loc[:, ~self.training_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
         self.test_data.loc[:, 'Features'] = self.test_data.loc[:, ~self.test_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
 
     def set_input_size(self):
-        # Set the input size based on the length of the feature array
         self.input_size = len(self.training_data.loc[0, 'Features'])
 
     def setup(self, stage=None):
