@@ -114,6 +114,8 @@ class AnchoringAttack(GenericAttack):
             N = n_adv
         else:
             N = n_disadv
+        advantaged_or_not = "advantaged" if advantaged else "disadvantaged"
+        print(f"Poisoning {N} {advantaged_or_not} points.")
         # Get the adversarial examples
         points = []
         mean = np.zeros_like(x_target)
@@ -127,9 +129,8 @@ class AnchoringAttack(GenericAttack):
             perturbation[self.advantaged_column_index] = 0
             x_adv = x_target + perturbation
             if not np.linalg.norm(x_adv - x_target) < self.tau:
-                print(np.linalg.norm(x_adv - x_target))
+                pass
             else:
-                print(np.linalg.norm(x_adv - x_target))
                 points.append(x_adv)
                 if len(points) == N:
                     break
@@ -153,17 +154,17 @@ class AnchoringAttack(GenericAttack):
         """
         :return: The poisoned dataset.
         """
-        self.poisoned_X, self.poisoned_y = self.attack()
-        self.poisoned_X = self.poisoned_X.float()
-        self.poisoned_y = self.poisoned_y.long()
+        poisoned_X, poisoned_y = self.attack()
+        poisoned_X = poisoned_X.float()
+        poisoned_y = poisoned_y.long()
         # Shuffle the poisoned dataset
-        permutation = np.random.permutation(len(self.poisoned_X))
-        self.poisoned_X = self.poisoned_X[permutation]
-        self.poisoned_y = self.poisoned_y[permutation]
+        permutation = np.random.permutation(len(poisoned_X))
+        poisoned_X = poisoned_X[permutation]
+        poisoned_y = poisoned_y[permutation]
         # Append to original dataset
-        self.X_ = torch.cat((self.X, self.poisoned_X))
-        self.y_ = torch.cat((torch.tensor(self.y), self.poisoned_y))
-        return self.X_, self.y_
+        X_ = torch.cat((self.X, poisoned_X))
+        y_ = torch.cat((torch.tensor(self.y), poisoned_y))
+        return X_, y_
 
 
 # Test the attack
@@ -172,7 +173,7 @@ if __name__ == '__main__':
                              path=PATH,
                              test_train_ratio=0.2,
                              method='random',
-                             epsilon=0.1,
+                             epsilon=1,
                              tau=1)
     # Attack the data
     x_adv_neg, x_adv_pos = attack.generate_poisoned_dataset()
