@@ -15,19 +15,23 @@ class GenericAttack(datamodule.DataModule):
         super().__init__(1, dataset, path, test_train_ratio)
         self.prepare_data()
         self.setup()
-        self.X = self.training_data[:][0] # ??? How to find X
-        self.y = self.training_data[:][1] # ??? How to find y
+        self.X = self.training_data[:][0]  # ??? How to find X
+        self.y = self.training_data[:][1]  # ??? How to find y
         # How to find the advantaged_index?
-        self.D_a = self.X[:, self.advantaged_column_index - 1] == self.advantaged_label
-        self.D_d = self.X[:, self.advantaged_column_index - 1] != self.advantaged_label
+        self.D_a = self.X[:, self.advantaged_column_index -
+                          1] == self.advantaged_label
+        self.D_d = self.X[:, self.advantaged_column_index -
+                          1] != self.advantaged_label
 
     def setup(self):
         df = pd.read_csv(self.path + self.dataset + '.csv')
 
         # Split and process the data
-        self.training_data, self.test_data = self.split_data(df, test_size=self.test_train_ratio, shuffle=True)
+        self.training_data, self.test_data = self.split_data(
+            df, test_size=self.test_train_ratio, shuffle=True)
         self.process_data()
         self.training_data = datamodule.CustomDataset(self.training_data)
+
 
 class AnchoringAttack(GenericAttack):
     def __init__(self, dataset: str, path: str, test_train_ratio: str,
@@ -107,7 +111,8 @@ class AnchoringAttack(GenericAttack):
             # Check if the adversarial example is distanced less
             # than tau from the target point
             # If not, perturb the adversarial example
-            perturbation = np.random.multivariate_normal(mean, cov * 0.01, 1)[0, :]
+            perturbation = np.random.multivariate_normal(mean, cov * 0.01,
+                                                         1)[0, :]
             perturbation[self.advantaged_column_index] = 0
             x_adv = x_target + perturbation
             if not np.linalg.norm(x_adv - x_target) < self.tau:
@@ -117,9 +122,6 @@ class AnchoringAttack(GenericAttack):
                 points.append(x_adv)
                 if len(points) == n_adv:
                     break
-                
-
-
 
         return points
 
