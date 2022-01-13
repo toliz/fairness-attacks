@@ -15,9 +15,8 @@ class GenericAttack(datamodule.DataModule):
         super().__init__(1, dataset, path, test_train_ratio)
         self.prepare_data()
         self.setup()
-        self.X = self.training_data[:][0]  # ??? How to find X
-        self.y = self.training_data[:][1]  # ??? How to find y
-        # How to find the advantaged_index?
+        self.X = self.training_data[:][0]
+        self.y = self.training_data[:][1]
         self.D_a = self.X[:, self.advantaged_column_index -
                           1] == self.advantaged_label
         self.D_d = self.X[:, self.advantaged_column_index -
@@ -60,14 +59,20 @@ class AnchoringAttack(GenericAttack):
         # Get the point
         x_target_neg = self.X[x_target_neg_idx]
         x_target_pos = self.X[x_target_pos_idx]
-        # Get the labels
-        y_target_neg = self.y[x_target_neg_idx]
-        y_target_pos = self.y[x_target_pos_idx]
         # Get the adversarial examples
-        x_adv_neg = self.attack_point(x_target_neg)
-        x_adv_pos = self.attack_point(x_target_pos)
+        # Generate |D_c^{-}|ε| positive poisoned points (x_adv_neg, +1)
+        # in the close vicinity of x_target_neg
+        x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
+        # Assign positive labels to the adversarial examples
+        y_adv_neg = np.ones(len(x_adv_neg))
+        # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
+        # in the close vicinity of x_target_pos
+        x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
+        # Assign negative labels to the adversarial examples
+        y_disadv_pos = np.zeros(len(x_disadv_pos))
         # Return the adversarial examples
-        return x_adv_neg, x_adv_pos
+        return np.concatenate((x_adv_neg, x_disadv_pos)), np.concatenate(
+            (y_adv_neg, y_disadv_pos))
 
     def sample(self):
         # Sample a negative example from the advatanged class
@@ -79,23 +84,23 @@ class AnchoringAttack(GenericAttack):
                 np.where((self.D_a.numpy() == 1) & (self.y == 0))[0])
             x_target_pos_idx = np.random.choice(
                 np.where((self.D_d.numpy() == 1) & (self.y == 1))[0])
-            return x_target_neg_idx, x_target_pos_idx
         elif self.method == 'non_random':
             raise NotImplementedError(
                 "Non-random anchoring is not implemented yet.")
         else:
             raise NotImplementedError("Unknown anchoring method.")
+        return x_target_neg_idx, x_target_pos_idx
 
-    def attack_point(self, x_target):
+    def attack_point(self, x_target, advantaged: bool):
         """
         :param x_target: The point to attack.
         :return: The adversarial examples
         """
         # Get the adversarial examples
-        x_adv = self.perturb(x_target)
+        x_adv = self.perturb(x_target, advantaged)
         return x_adv
 
-    def perturb(self, x_target):
+    def perturb(self, x_target, advantaged: bool):
         """
         :param x_target: The point to attack.
         :return: The adversarial examples
@@ -103,6 +108,10 @@ class AnchoringAttack(GenericAttack):
         # Calculate the number of points to perturb
         n_adv = int(self.epsilon * len(self.D_a))
         n_disadv = int(self.epsilon * len(self.D_d))
+        if advantaged:
+            N = n_adv
+        else:
+            N = n_disadv
         # Get the adversarial examples
         points = []
         mean = np.zeros_like(x_target)
@@ -120,7 +129,7 @@ class AnchoringAttack(GenericAttack):
             else:
                 print(np.linalg.norm(x_adv - x_target))
                 points.append(x_adv)
-                if len(points) == n_adv:
+                if len(points) == N:
                     break
 
         return points

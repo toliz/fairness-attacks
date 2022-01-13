@@ -10,6 +10,7 @@ from pandas import DataFrame
 
 
 class DataModule(pl.LightningDataModule):
+
     def __init__(self,
                  batch_size: int,
                  dataset: str,
@@ -29,8 +30,8 @@ class DataModule(pl.LightningDataModule):
             if not os.path.isfile(self.path + 'German_Credit.csv'):
                 df = pd.read_csv(
                     'https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
-                    names=['Attribute' + str(i)
-                           for i in range(1, 21)] + ['Class'],
+                    names=['Attribute' + str(i) for i in range(1, 21)] +
+                    ['Class'],
                     delim_whitespace=True)
                 df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
                 df['Advantage'] = df[
@@ -89,15 +90,14 @@ class DataModule(pl.LightningDataModule):
             self.test_data.loc[:,
                                attribute] = self.test_data.loc[:,
                                                                attribute].apply(
-                                                                   lambda x:
-                                                                   enc.
-                                                                   transform(
-                                                                       [x]
-                                                                   )[0].astype(
+                                                                   lambda x: enc
+                                                                   .transform([
+                                                                       x
+                                                                   ])[0].astype(
                                                                        float))
             if i == self.advantaged_column_index:
                 self.advantaged_label = enc.transform([self.advantaged_class
-                                                       ])[0][0]
+                                                      ])[0][0]
 
         # Minmax normalization for numerical attributes
         for i in numerical_attributes:
@@ -109,30 +109,25 @@ class DataModule(pl.LightningDataModule):
                                                                        attribute].apply(
                                                                            lambda
                                                                            x:
-                                                                           [(x
-                                                                             -
+                                                                           [(x -
                                                                              min
-                                                                             )
-                                                                            /
+                                                                            ) /
                                                                             (max
                                                                              -
                                                                              min
-                                                                             )
-                                                                            ])
+                                                                            )])
             self.test_data.loc[:,
                                attribute] = self.test_data.loc[:,
                                                                attribute].apply(
                                                                    lambda x: [
-                                                                       np.clip(
-                                                                           (x -
-                                                                            min
-                                                                            ) /
-                                                                           (max
-                                                                            -
-                                                                            min
-                                                                            ),
-                                                                           0.,
-                                                                           1.)
+                                                                       np.clip((
+                                                                           x -
+                                                                           min
+                                                                       ) / (
+                                                                           max -
+                                                                           min
+                                                                       ), 0., 1.
+                                                                              )
                                                                    ])
 
         # Combine all attributes to one column
@@ -214,6 +209,7 @@ class DataModule(pl.LightningDataModule):
 
 
 class CustomDataset(Dataset):
+
     def __init__(self, _dataset):
         self.dataset = _dataset
 
