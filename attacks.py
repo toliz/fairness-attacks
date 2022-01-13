@@ -11,26 +11,40 @@ PATH = 'data/'
 
 
 class GenericAttack(DataModule):
-    def __init__(self, batch_size: int, dataset: str, path: str, test_train_ratio: float = 0.2):
-        super().__init__(batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
+    def __init__(self,
+                 batch_size: int,
+                 dataset: str,
+                 path: str,
+                 test_train_ratio: float = 0.2):
+        super().__init__(batch_size=batch_size,
+                         dataset=dataset,
+                         path=path,
+                         test_train_ratio=test_train_ratio)
 
     def setup(self, stage=None):
         df = pd.read_csv(self.path + self.dataset + '.csv')
 
         # Split and process the data
-        self.training_data, self.test_data = self.split_data(df, test_size=self.test_train_ratio, shuffle=True)
+        self.training_data, self.test_data = self.split_data(
+            df, test_size=self.test_train_ratio, shuffle=True)
         self.process_data()
 
         # Set the training and validation dataset
         if stage == 'fit' or stage is None:
-            self.training_data, self.val_data = self.split_data(self.training_data,
-                                                                test_size=self.test_train_ratio, shuffle=True)
+            self.training_data, self.val_data = self.split_data(
+                self.training_data,
+                test_size=self.test_train_ratio,
+                shuffle=True)
             self.training_data = CleanDataset(self.training_data)
 
             self.X = self.training_data[:][0]
             self.y = self.training_data[:][1]
-            self.D_a = self.X[:, self.advantaged_column_index - 1] == self.advantaged_label
-            self.D_d = self.X[:, self.advantaged_column_index - 1] != self.advantaged_label
+            self.D_a = self.X[:, self.
+                              information_dict['advantaged_column_index'] -
+                              1] == self.information_dict['advantaged_label']
+            self.D_d = self.X[:, self.
+                              information_dict['advantaged_column_index'] -
+                              1] != self.information_dict['advantaged_label']
 
             self.training_data = self.generate_poisoned_dataset()
 
@@ -46,15 +60,26 @@ class GenericAttack(DataModule):
 
 
 class AnchoringAttack(GenericAttack):
-    def __init__(self, batch_size: int, dataset: str, path: str, method: str, epsilon: float, tau: float,
-                 test_train_ratio: float = 0.2,):
+    def __init__(
+        self,
+        batch_size: int,
+        dataset: str,
+        path: str,
+        method: str,
+        epsilon: float,
+        tau: float,
+        test_train_ratio: float = 0.2,
+    ):
         """
         :param method: The method to use for anchoring.
         Options:
         - 'random' - Randomly select a point from the dataset.
         - 'non_random' - Select a popular point from the dataset.
         """
-        super().__init__(batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
+        super().__init__(batch_size=batch_size,
+                         dataset=dataset,
+                         path=path,
+                         test_train_ratio=test_train_ratio)
         self.method = method
         self.epsilon = epsilon
         self.tau = tau
@@ -77,12 +102,14 @@ class AnchoringAttack(GenericAttack):
         # in the close vicinity of x_target_neg
         x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
         # Assign positive labels to the adversarial examples
-        y_adv_neg = torch.ones(len(x_adv_neg))
+        y_adv_neg = torch.zeros(
+            len(x_adv_neg)) + self.information_dict['POSITIVE_CLASS']
         # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
         # in the close vicinity of x_target_pos
         x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
         # Assign negative labels to the adversarial examples
-        y_disadv_pos = torch.zeros(len(x_disadv_pos))
+        y_disadv_pos = torch.zeros(
+            len(x_disadv_pos)) + self.information_dict['NEGATIVE_CLASS']
         # Return the adversarial examples
         x_adv_neg = torch.stack(x_adv_neg)
         x_disadv_pos = torch.stack(x_disadv_pos)
@@ -96,9 +123,11 @@ class AnchoringAttack(GenericAttack):
         if self.method == 'random':
             # Randomly select a point from the dataset
             x_target_neg_idx = np.random.choice(
-                np.where((self.D_a.numpy() == 1) & (self.y == 0))[0])
+                np.where((self.D_a.numpy() == 1) & (
+                    self.y == self.information_dict['NEGATIVE_CLASS']))[0])
             x_target_pos_idx = np.random.choice(
-                np.where((self.D_d.numpy() == 1) & (self.y == 1))[0])
+                np.where((self.D_d.numpy() == 1) & (
+                    self.y == self.information_dict['POSITIVE_CLASS']))[0])
         elif self.method == 'non_random':
             raise NotImplementedError(
                 "Non-random anchoring is not implemented yet.")
@@ -132,16 +161,16 @@ class AnchoringAttack(GenericAttack):
         # Get the adversarial examples
         points = []
         mean = np.zeros_like(x_target)
-        cov = 2 * np.eye(len(mean))
+        cov = 2 * np.eye(len(mean)) * self.tau**2
         while True:
             # Check if the adversarial example is distanced less
             # than tau from the target point
             # If not, perturb the adversarial example
             perturbation = np.random.multivariate_normal(mean, cov * 0.01,
                                                          1)[0, :]
-            perturbation[self.advantaged_column_index] = 0
+            perturbation[self.information_dict['advantaged_column_index']] = 0
             x_adv = x_target + perturbation
-            if not np.linalg.norm(x_adv - x_target) < self.tau:
+            if not np.linalg.norm(x_adv - x_target) <= self.tau:
                 pass
             else:
                 points.append(x_adv)
@@ -192,3 +221,18 @@ class PoissonedDataset(Dataset):
 
     def __len__(self):
         return len(self.X)
+
+
+if __name__ == '__main__':
+    attack = AnchoringAttack(1,
+                             dataset='German_Credit',
+                             path=PATH,
+                             test_train_ratio=0.2,
+                             method='random',
+                             epsilon=1,
+                             tau=0)
+    # Attack the data
+    attack.prepare_data()
+    attack.setup()
+    # Show the adversarial examples
+    print(PoissonedDataset)

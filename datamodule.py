@@ -18,6 +18,7 @@ class DataModule(pl.LightningDataModule):
         self.path = path
         self.test_train_ratio = test_train_ratio
         self.num_classes = 2
+        self.information_dict = {}
 
     def prepare_data(self):
         # Download data if not found in the path
@@ -30,7 +31,7 @@ class DataModule(pl.LightningDataModule):
                 df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
                 # Find if the datapoint has advantage. TRUE if he/she is from Germany
                 df['Advantage'] = df['Attribute20'] == 'A202'
-                self.advantaged_indices = df[df['Advantage'] == True].index
+                self.information_dict['advantaged_indices'] = df[df['Advantage'] == True].index
                 # Save the data to memory
                 df.to_csv(self.path + 'German_Credit.csv', index=False)
                 print(self.dataset + ' Dataset Downloaded!')
@@ -72,11 +73,13 @@ class DataModule(pl.LightningDataModule):
         # Get the id of the numerical and qualitative attributes
         numerical_attributes = [2, 5, 8, 11, 13, 16, 18]
         qualitative_attributes = [1, 3, 4, 6, 7, 9, 10, 12, 14, 15, 17, 19, 20]
-
+        self.information_dict['numerical_attributes'] = numerical_attributes
+        self.information_dict['qualitative_attributes'] = qualitative_attributes
         # To be used for attack
-        self.advantaged_column_index = 20
-        self.advantaged_class = 'A202'
-
+        self.information_dict['advantaged_column_index'] = 20
+        self.information_dict['advantaged_class'] = 'A202'
+        self.information_dict['POSITIVE_CLASS'] = 0
+        self.information_dict['NEGATIVE_CLASS'] = 1
         # One-Hot encoding for qualitative attributes
         for i in qualitative_attributes:
             attribute = 'Attribute' + str(i)
@@ -87,8 +90,8 @@ class DataModule(pl.LightningDataModule):
             self.test_data.loc[:, attribute] = self.test_data.loc[:, attribute].apply(
                 lambda x: enc.transform([x])[0].astype(float))
 
-            if i == self.advantaged_column_index:
-                self.advantaged_label = enc.transform([self.advantaged_class])[0][0]
+            if i == self.information_dict['advantaged_column_index']:
+                self.information_dict['advantaged_label'] = enc.transform([self.information_dict['advantaged_class']])[0][0]
 
         # Minmax normalization for numerical attributes
         for i in numerical_attributes:
