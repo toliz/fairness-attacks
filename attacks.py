@@ -64,15 +64,17 @@ class AnchoringAttack(GenericAttack):
         # in the close vicinity of x_target_neg
         x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
         # Assign positive labels to the adversarial examples
-        y_adv_neg = np.ones(len(x_adv_neg))
+        y_adv_neg = torch.ones(len(x_adv_neg))
         # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
         # in the close vicinity of x_target_pos
         x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
         # Assign negative labels to the adversarial examples
-        y_disadv_pos = np.zeros(len(x_disadv_pos))
+        y_disadv_pos = torch.zeros(len(x_disadv_pos))
         # Return the adversarial examples
-        return np.concatenate((x_adv_neg, x_disadv_pos)), np.concatenate(
-            (y_adv_neg, y_disadv_pos))
+        x_adv_neg = torch.stack(x_adv_neg)
+        x_disadv_pos = torch.stack(x_disadv_pos)
+        return torch.cat([x_adv_neg,
+                          x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
 
     def sample(self):
         # Sample a negative example from the advatanged class
@@ -106,8 +108,8 @@ class AnchoringAttack(GenericAttack):
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
-        n_adv = int(self.epsilon * len(self.D_a))
-        n_disadv = int(self.epsilon * len(self.D_d))
+        n_adv = int(self.epsilon * self.D_a.sum())
+        n_disadv = int(self.epsilon * self.D_d.sum())
         if advantaged:
             N = n_adv
         else:
@@ -147,6 +149,22 @@ class AnchoringAttack(GenericAttack):
             raise NotImplementedError(
                 "Projection to feasible set is not implemented yet.")
 
+    def generate_poisoned_dataset(self):
+        """
+        :return: The poisoned dataset.
+        """
+        self.poisoned_X, self.poisoned_y = self.attack()
+        self.poisoned_X = self.poisoned_X.float()
+        self.poisoned_y = self.poisoned_y.long()
+        # Shuffle the poisoned dataset
+        permutation = np.random.permutation(len(self.poisoned_X))
+        self.poisoned_X = self.poisoned_X[permutation]
+        self.poisoned_y = self.poisoned_y[permutation]
+        # Append to original dataset
+        self.X_ = torch.cat((self.X, self.poisoned_X))
+        self.y_ = torch.cat((torch.tensor(self.y), self.poisoned_y))
+        return self.X_, self.y_
+
 
 # Test the attack
 if __name__ == '__main__':
@@ -157,7 +175,7 @@ if __name__ == '__main__':
                              epsilon=0.1,
                              tau=1)
     # Attack the data
-    x_adv_neg, x_adv_pos = attack.attack()
+    x_adv_neg, x_adv_pos = attack.generate_poisoned_dataset()
     # Show the adversarial examples
     print(x_adv_neg)
     print(x_adv_pos)
