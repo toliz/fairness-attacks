@@ -14,9 +14,11 @@ def run_experiment(args):
     seed_everything(123)
 
     # Set the data module
-    # dm = DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
-    dm = AnchoringAttack(dataset=args.dataset, path=args.path, batch_size=args.batch_size, method='random', epsilon=1,
-                         tau=1)
+    if args.attack == 'None':
+        dm = DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
+    elif args.attack == 'Anchoring':
+        dm = AnchoringAttack(dataset=args.dataset, path=args.path, batch_size=args.batch_size, method='random',
+                             epsilon=1, tau=1)
     dm.prepare_data()
     dm.setup()
 
@@ -69,6 +71,18 @@ if __name__ == '__main__':
                         help='Project name to save the logs')
     parser.add_argument('--experiment', default='mlp_baseline', type=str,
                         help='Experiment name to save the logs')
+
+    # Attacks
+    parser.add_argument('--attack', default='Anchoring', type=str, choices=['Anchoring, Influence'],
+                        help='Name of the attack')
+
+    # Anchoring Attack
+    parser.add_argument('--anchoring_method', default='random', type=str, choices=['random'],
+                        help='Sampling method for anchoring attack')
+    parser.add_argument('--tau', default='1', type=float,
+                        help='')
+    parser.add_argument('--epsilon', default='1', type=float,
+                        help='')
 
     args = parser.parse_args()
 
