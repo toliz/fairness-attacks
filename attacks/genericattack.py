@@ -1,5 +1,5 @@
 import pandas as pd
-from datamodule import DataModule, CleanDataset
+from attacks.datamodule import DataModule, CleanDataset
 from abc import abstractmethod
 
 

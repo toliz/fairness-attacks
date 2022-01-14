@@ -1,5 +1,5 @@
 from attacks.anchoringattack import AnchoringAttackDatamodule
-from datamodule import DataModule
+from attacks.datamodule import DataModule
 
 
 def create_datamodule(args):
@@ -7,6 +7,6 @@ def create_datamodule(args):
         return DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
     elif args.attack == 'Anchoring':
         return AnchoringAttackDatamodule(dataset=args.dataset, path=args.path, batch_size=args.batch_size,
-                                         method='random', epsilon=1, tau=1)
+                                         method=args.anchoring_method, epsilon=args.epsilon, tau=args.tau)
     elif args.attack == 'Influence':
         raise NotImplementedError("Influence attack not implemented.")

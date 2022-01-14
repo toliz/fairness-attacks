@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torch import Tensor
-from genericattack import GenericAttackDataModule
+from attacks.genericattack import GenericAttackDataModule
 
 PATH = './data/'
 

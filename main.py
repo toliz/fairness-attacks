@@ -72,9 +72,9 @@ if __name__ == '__main__':
                         help='Name of the attack')
 
     # Anchoring Attack
-    parser.add_argument('--anchoring_method', default='random', type=str, choices=['random'],
+    parser.add_argument('--anchoring_method', default='non_random', type=str, choices=['random', 'non_random'],
                         help='Sampling method for anchoring attack')
-    parser.add_argument('--tau', default='1', type=float,
+    parser.add_argument('--tau', default='0', type=float,
                         help='')
     parser.add_argument('--epsilon', default='1', type=float,
                         help='')

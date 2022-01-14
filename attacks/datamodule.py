@@ -170,3 +170,9 @@ class CleanDataset(Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
+    def get_advantaged_points(self):
+        advantaged_points = self.dataset[self.dataset['Advantage']]
+        features = torch.tensor(advantaged_points.loc[:, 'Features']).float()
+        labels = advantaged_points.loc[:, 'Class']
+        return features, labels
