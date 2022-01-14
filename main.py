@@ -18,7 +18,8 @@ def run_experiment(args):
     dm.setup()
 
     # Set the model
-    model = Classifier(model=MLP(input_size=dm.get_input_size(), num_hidden=16, num_classes=dm.get_num_classes()))
+    model = Classifier(model=MLP(input_size=dm.get_input_size(), num_hidden=16, num_classes=dm.get_num_classes()),
+                       dm=dm)
 
     # Call the model with the lowest val_loss at the end of the training
     checkpoint_callback = ModelCheckpoint(

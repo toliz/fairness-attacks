@@ -27,7 +27,7 @@ class DataModule(pl.LightningDataModule):
                 # Load data from link
                 df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
                                  names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'], delim_whitespace=True)
-                # Get the Class into the right form
+                # Get the Class into the right form (0=Good, 1=Bad)
                 df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
                 # Find if the datapoint has advantage. TRUE if he/she is from Germany
                 df['Advantage'] = df['Attribute20'] == 'A202'
@@ -175,14 +175,14 @@ class CleanDataset(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-    def get_advantaged_points(self):
+    def get_advantaged_points(self, device):
         advantaged_points = self.dataset.loc[self.dataset['Advantage'] == True]
-        features = torch.tensor([*advantaged_points['Features'].values]).float()
-        labels = advantaged_points.loc[:, 'Class']
+        features = torch.tensor([*advantaged_points['Features'].values]).float().to(device)
+        labels = torch.tensor(advantaged_points['Class'].values).to(device)
         return features, labels
 
-    def get_disadvantaged_points(self):
+    def get_disadvantaged_points(self, device):
         disadvantaged_points = self.dataset.loc[self.dataset['Advantage'] == False]
-        features = torch.tensor([*disadvantaged_points['Features'].values]).float()
-        labels = disadvantaged_points.loc[:, 'Class']
+        features = torch.tensor([*disadvantaged_points['Features'].values]).float().to(device)
+        labels = torch.tensor(disadvantaged_points['Class'].values).to(device)
         return features, labels

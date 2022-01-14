@@ -15,3 +15,7 @@ class MLP(nn.Module):
     def forward(self, x: Tensor):
         out = self.mlp(x)
         return out
+
+    @property
+    def device(self):
+        return next(self.parameters()).device

@@ -2,14 +2,16 @@ import pytorch_lightning as pl
 from torchmetrics import Accuracy, ConfusionMatrix
 import torch
 import torch.nn as nn
+from fairnessmetrics import get_fairness_metrics
 
 
 class Classifier(pl.LightningModule):
-    def __init__(self, model, learning_rate=1e-3):
+    def __init__(self, model, dm, learning_rate=1e-3):
         super().__init__()
 
         self.learning_rate = learning_rate
         self.model = model
+        self.dm = dm
         self.accuracy = Accuracy()
         self.conf_matrix = ConfusionMatrix(num_classes=self.model.num_classes)
         self.criterion = nn.CrossEntropyLoss()
@@ -54,6 +56,9 @@ class Classifier(pl.LightningModule):
 
     def test_epoch_end(self, outputs):
         print(self.conf_matrix.compute())
+        spd, eod = get_fairness_metrics(model=self.model, dm=self.dm)
+        self.log('SPD', spd)
+        self.log('EOD', eod)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
