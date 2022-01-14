@@ -91,7 +91,8 @@ class DataModule(pl.LightningDataModule):
                 lambda x: enc.transform([x])[0].astype(float))
 
             if i == self.information_dict['advantaged_column_index']:
-                self.information_dict['advantaged_label'] = enc.transform([self.information_dict['advantaged_class']])[0][0]
+                self.information_dict['advantaged_label'] = \
+                enc.transform([self.information_dict['advantaged_class']])[0][0]
 
         # Minmax normalization for numerical attributes
         for i in numerical_attributes:
@@ -113,8 +114,8 @@ class DataModule(pl.LightningDataModule):
         # Normalize IDs
         mean = self.training_data.loc[:, 'Attribute1'].mean()
         std = self.training_data.loc[:, 'Attribute1'].std()
-        self.training_data.loc[:, 'Attribute1'] = (self.training_data.loc[:, 'Attribute1'] - mean)/std
-        self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean)/std
+        self.training_data.loc[:, 'Attribute1'] = (self.training_data.loc[:, 'Attribute1'] - mean) / std
+        self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean) / std
 
         # Combine all attributes to one column
         self.create_column_with_features(fucn=np.hstack)
@@ -122,10 +123,13 @@ class DataModule(pl.LightningDataModule):
         # Get the input size needed for the model
         self.set_input_size()
 
-    def create_column_with_features(self, non_attr_columns: list = ['Class', 'Advantage'], fucn: callable = np.concatenate):
+    def create_column_with_features(self, non_attr_columns: list = ['Class', 'Advantage'],
+                                    fucn: callable = np.concatenate):
         # Combine all attribute columns to one column containing one flat array
-        self.training_data.loc[:, 'Features'] = self.training_data.loc[:, ~self.training_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
-        self.test_data.loc[:, 'Features'] = self.test_data.loc[:, ~self.test_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
+        self.training_data.loc[:, 'Features'] = self.training_data.loc[:,
+                                                ~self.training_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
+        self.test_data.loc[:, 'Features'] = self.test_data.loc[:, ~self.test_data.columns.isin(non_attr_columns)].apply(
+            fucn, axis=1)
 
     def set_input_size(self):
         # Set the input size based on the length of the feature array
@@ -172,7 +176,13 @@ class CleanDataset(Dataset):
         return len(self.dataset)
 
     def get_advantaged_points(self):
-        advantaged_points = self.dataset[self.dataset['Advantage']]
-        features = torch.tensor(advantaged_points.loc[:, 'Features']).float()
+        advantaged_points = self.dataset.loc[self.dataset['Advantage'] == True]
+        features = torch.tensor([*advantaged_points['Features'].values]).float()
         labels = advantaged_points.loc[:, 'Class']
+        return features, labels
+
+    def get_disadvantaged_points(self):
+        disadvantaged_points = self.dataset.loc[self.dataset['Advantage'] == False]
+        features = torch.tensor([*disadvantaged_points['Features'].values]).float()
+        labels = disadvantaged_points.loc[:, 'Class']
         return features, labels
