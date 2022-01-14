@@ -165,8 +165,11 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
-        n_adv = int(self.epsilon * self.D_a.sum())
-        n_disadv = int(self.epsilon * self.D_d.sum())
+        n_adv = int(self.epsilon *
+                    np.sum(self.y == self.information_dict['NEGATIVE_CLASS']))
+        n_disadv = int(
+            self.epsilon *
+            np.sum(self.y == self.information_dict['POSITIVE_CLASS']))
         if advantaged:
             N = n_adv
         else:
