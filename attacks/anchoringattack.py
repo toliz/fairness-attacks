@@ -2,21 +2,32 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torch import Tensor
-from attacks.genericattack import GenericAttackDataModule
+from genericattack import GenericAttackDataModule
 
 PATH = './data/'
 
 
 class AnchoringAttackDatamodule(GenericAttackDataModule):
-    def __init__(self, batch_size: int, dataset: str, path: str, method: str, epsilon: float, tau: float,
-                 test_train_ratio: float = 0.2):
+    def __init__(
+        self,
+        batch_size: int,
+        dataset: str,
+        path: str,
+        method: str,
+        epsilon: float,
+        tau: float,
+        test_train_ratio: float = 0.2,
+    ):
         """
         :param method: The method to use for anchoring.
         Options:
         - 'random' - Randomly select a point from the dataset.
         - 'non_random' - Select a popular point from the dataset.
         """
-        super().__init__(batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
+        super().__init__(batch_size=batch_size,
+                         dataset=dataset,
+                         path=path,
+                         test_train_ratio=test_train_ratio)
         self.method = method
         self.epsilon = epsilon
         self.tau = tau
@@ -39,33 +50,95 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # in the close vicinity of x_target_neg
         x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
         # Assign positive labels to the adversarial examples
-        y_adv_neg = torch.zeros(len(x_adv_neg)) + self.information_dict['POSITIVE_CLASS']
+        y_adv_neg = torch.zeros(
+            len(x_adv_neg)) + self.information_dict['POSITIVE_CLASS']
         # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
         # in the close vicinity of x_target_pos
         x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
         # Assign negative labels to the adversarial examples
-        y_disadv_pos = torch.zeros(len(x_disadv_pos)) + self.information_dict['NEGATIVE_CLASS']
+        y_disadv_pos = torch.zeros(
+            len(x_disadv_pos)) + self.information_dict['NEGATIVE_CLASS']
         # Return the adversarial examples
         x_adv_neg = torch.stack(x_adv_neg)
         x_disadv_pos = torch.stack(x_disadv_pos)
-        return torch.cat([x_adv_neg, x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
+        return torch.cat([x_adv_neg,
+                          x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
 
     def sample(self):
+        """
+        :return: The indices of the points to attack.
+        """
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
-        np.random.seed(0)
+        negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
+            self.y == self.information_dict['NEGATIVE_CLASS']))[0]
+        positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
+            self.y == self.information_dict['POSITIVE_CLASS']))[0]
         if self.method == 'random':
+            np.random.seed(0)
             # Randomly select a point from the dataset
-            x_target_neg_idx = np.random.choice(
-                np.where((self.D_a.numpy() == 1) & (self.y == self.information_dict['NEGATIVE_CLASS']))[0])
-            x_target_pos_idx = np.random.choice(np.where((self.D_d.numpy() == 1) &
-                                                         (self.y == self.information_dict['POSITIVE_CLASS']))[0])
+            x_target_neg_idx = np.random.choice(negative_D_a_mask, size=1)[0]
+            x_target_pos_idx = np.random.choice(positive_D_d_mask, size=1)[0]
         elif self.method == 'non_random':
-            raise NotImplementedError(
-                "Non-random anchoring is not implemented yet.")
+            """
+            Non-random method: Select the most popular point from the dataset.
+            The most popular point is the one that has the most neighbors with
+            the same advantage class and label.
+            """
+            # Get the number of neighbors for each point
+            neighbors_neg = self.get_neighbors(negative_D_a_mask)
+            neighbors_pos = self.get_neighbors(positive_D_d_mask)
+            # Get the most popular point
+            x_target_neg_idx = np.argmax(neighbors_neg)
+            x_target_pos_idx = np.argmax(neighbors_pos)
+            # Get the most popular point
+
         else:
             raise NotImplementedError("Unknown anchoring method.")
         return x_target_neg_idx, x_target_pos_idx
+
+    def get_neighbors(self,
+                      mask,
+                      distance_threshold=3,
+                      distance_type='euclidean'):
+        """
+        :param mask: The mask of the points to consider.
+        :param distance_threshold: The distance threshold to consider.
+        :param distance_type: The distance type to consider.
+        Options: 
+        - 'euclidean'
+        - 'manhattan'
+        - TODO: More distance types
+        :return: The number of neighbors for each point.
+        """
+        # Get the number of neighbors for each point in the masked dataset
+        # Return the number of neighbors for each point in the original dataset
+        neighbors = np.zeros(len(self.X))
+        for idx in mask:
+            # Get the neighbors
+            neighbors[idx] = len(
+                np.where(
+                    self.get_distance(
+                        self.X[idx], self.X[mask], distance_type=distance_type)
+                    < distance_threshold)[0])
+        return neighbors
+
+    def get_distance(self, x1, dataset, distance_type='euclidean'):
+        """
+        :param x1: The first point.
+        :param dataset: The dataset to consider.
+        :param distance_type: The distance type to consider.
+        Options:
+        - 'euclidean'
+        - 'manhattan'
+        return: The distance between x1 and each point in dataset.
+        """
+        if distance_type == 'euclidean':
+            return np.linalg.norm(dataset - x1, axis=1)
+        elif distance_type == 'manhattan':
+            return np.sum(np.abs(dataset - x1), axis=1)
+        else:
+            raise NotImplementedError("Unknown distance type.")
 
     def attack_point(self, x_target, advantaged: bool):
         """
@@ -79,6 +152,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
     def perturb(self, x_target, advantaged: bool):
         """
         :param x_target: The point to attack.
+        :param advantaged: If True, the point is advantaged.
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
@@ -93,12 +167,13 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Get the adversarial examples
         points = []
         mean = np.zeros_like(x_target)
-        cov = 2 * np.eye(len(mean)) * self.tau ** 2
+        cov = 2 * np.eye(len(mean)) * self.tau**2
         while True:
             # Check if the adversarial example is distanced less
             # than tau from the target point
             # If not, perturb the adversarial example
-            perturbation = np.random.multivariate_normal(mean, cov * 0.01, 1)[0, :]
+            perturbation = np.random.multivariate_normal(mean, cov * 0.01,
+                                                         1)[0, :]
             perturbation[self.information_dict['advantaged_column_index']] = 0
             x_adv = x_target + perturbation
             if not np.linalg.norm(x_adv - x_target) <= self.tau:
@@ -113,6 +188,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
     def project_to_feasible_set(self, x_adv, feasible_set):
         """
         :param x_adv: The adversarial examples.
+        :param feasible_set: The feasible set.
         :return: The adversarial examples projected to the feasible set.
         """
         # Project the adversarial examples to the feasible set
@@ -159,7 +235,7 @@ if __name__ == '__main__':
                                        dataset='German_Credit',
                                        path=PATH,
                                        test_train_ratio=0.2,
-                                       method='random',
+                                       method='non_random',
                                        epsilon=1,
                                        tau=0)
     # Attack the data
