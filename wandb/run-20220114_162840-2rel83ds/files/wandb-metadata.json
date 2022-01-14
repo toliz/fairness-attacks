@@ -1,0 +1,24 @@
+{
+    "os": "Linux-5.4.0-91-generic-x86_64-with-glibc2.17",
+    "python": "3.8.12",
+    "heartbeatAt": "2022-01-14T15:28:42.268440",
+    "startedAt": "2022-01-14T15:28:40.981451",
+    "docker": null,
+    "gpu": "Quadro M2000M",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "git@github.com:toliz/FACT-AI.git",
+        "commit": "a0c541eb83d632411530e201ddd69573512b4da5"
+    },
+    "email": "orpheous18@yahoo.gr",
+    "root": "/home/john/Desktop/MSc AI/FACT-AI",
+    "host": "john-ThinkPad-P50",
+    "username": "john",
+    "executable": "/home/john/anaconda3/bin/python"
+}

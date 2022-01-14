@@ -1,0 +1,410 @@
+2022-01-14 16:03:45,831 INFO    MainThread:1069237 [internal.py:wandb_internal():87] W&B internal server running at pid: 1069237, started at: 2022-01-14 16:03:45.831254
+2022-01-14 16:03:45,833 INFO    WriterThread:1069237 [datastore.py:open_for_write():77] open: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/run-2yixf6bc.wandb
+2022-01-14 16:03:45,833 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: check_version
+2022-01-14 16:03:45,834 DEBUG   SenderThread:1069237 [sender.py:send():234] send: header
+2022-01-14 16:03:45,834 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: check_version
+2022-01-14 16:03:45,934 DEBUG   SenderThread:1069237 [sender.py:send():234] send: run
+2022-01-14 16:03:46,185 INFO    SenderThread:1069237 [dir_watcher.py:__init__():169] watching files in: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files
+2022-01-14 16:03:46,185 INFO    SenderThread:1069237 [sender.py:_start_run_threads():804] run started: 2yixf6bc with start time 1642172625
+2022-01-14 16:03:46,185 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:46,186 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:46,188 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: run_start
+2022-01-14 16:03:46,197 DEBUG   HandlerThread:1069237 [meta.py:__init__():40] meta init
+2022-01-14 16:03:46,197 DEBUG   HandlerThread:1069237 [meta.py:__init__():54] meta init done
+2022-01-14 16:03:46,197 DEBUG   HandlerThread:1069237 [meta.py:probe():214] probe
+2022-01-14 16:03:46,205 DEBUG   HandlerThread:1069237 [meta.py:_setup_git():204] setup git
+2022-01-14 16:03:46,239 DEBUG   HandlerThread:1069237 [meta.py:_setup_git():211] setup git done
+2022-01-14 16:03:46,240 DEBUG   HandlerThread:1069237 [meta.py:_save_pip():58] save pip
+2022-01-14 16:03:46,242 DEBUG   HandlerThread:1069237 [meta.py:_save_pip():72] save pip done
+2022-01-14 16:03:46,242 DEBUG   HandlerThread:1069237 [meta.py:_save_conda():79] save conda
+2022-01-14 16:03:47,186 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_created():217] file/dir created: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:47,186 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_created():217] file/dir created: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/conda-environment.yaml
+2022-01-14 16:03:47,186 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_created():217] file/dir created: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/requirements.txt
+2022-01-14 16:03:52,186 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_created():217] file/dir created: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:03:52,611 DEBUG   HandlerThread:1069237 [meta.py:_save_conda():89] save conda done
+2022-01-14 16:03:52,612 DEBUG   HandlerThread:1069237 [meta.py:probe():252] probe done
+2022-01-14 16:03:52,731 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: stop_status
+2022-01-14 16:03:52,731 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: stop_status
+2022-01-14 16:03:52,939 DEBUG   SenderThread:1069237 [sender.py:send():234] send: files
+2022-01-14 16:03:52,939 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-metadata.json with policy now
+2022-01-14 16:03:53,186 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/conda-environment.yaml
+2022-01-14 16:03:53,187 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_created():217] file/dir created: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-metadata.json
+2022-01-14 16:03:53,559 INFO    Thread-11 :1069237 [upload_job.py:push():137] Uploaded file /tmp/tmp4g914uoywandb/1wx6o2ri-wandb-metadata.json
+2022-01-14 16:03:53,679 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,680 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:53,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:53,681 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:53,681 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:53,685 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,685 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,685 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:53,687 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,687 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,687 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:53,687 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:53,688 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:53,985 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,986 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,986 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:53,986 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:53,986 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:53,986 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:53,990 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,991 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:53,992 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:53,992 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:53,993 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:53,993 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,175 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,176 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,176 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,178 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,178 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,178 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,184 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,185 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,186 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,186 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,186 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,186 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,187 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:54,187 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:03:54,418 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,418 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,420 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,420 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,420 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,420 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,426 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,426 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,426 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,428 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,428 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,428 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,617 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,619 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,619 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,619 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,619 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,619 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,625 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,626 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,626 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,628 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,628 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,628 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,875 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,876 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,876 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,876 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,876 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,876 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:54,882 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,882 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:54,882 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:54,884 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:54,884 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:54,884 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,055 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,055 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,055 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,055 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,055 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,055 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,060 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,062 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,062 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,062 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,062 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,062 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,187 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:55,237 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,237 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,237 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,237 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,238 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,238 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,241 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,242 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,242 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,243 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,244 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,244 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,457 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,458 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,458 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,458 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,458 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,459 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,466 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,466 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,466 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,466 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,466 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,467 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,667 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,668 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,669 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,669 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,669 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,669 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,675 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,675 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,675 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,676 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,676 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,677 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,862 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,863 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,863 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,863 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,863 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,863 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:55,867 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,867 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:55,867 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:55,868 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:55,868 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:55,869 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,096 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,097 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,097 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,098 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,098 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,098 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,103 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,105 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,105 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,105 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,105 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,106 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,187 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:56,188 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:03:56,293 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,293 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,293 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,293 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,293 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,294 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,297 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,297 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,299 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,299 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,299 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,300 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,502 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,502 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,502 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,503 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,503 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,503 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,508 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,508 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,509 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,510 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,510 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,510 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,672 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,672 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,673 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,674 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,674 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,674 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,678 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,679 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,680 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,680 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,680 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,839 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,840 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,840 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,841 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,841 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,841 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:56,846 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,846 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:56,846 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:56,847 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:56,847 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:56,847 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,039 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,039 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,039 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,039 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,039 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,039 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,043 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,045 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,045 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,045 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,045 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,045 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,188 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:57,209 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,209 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,210 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,210 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,210 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,210 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,215 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,215 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,216 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,216 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,216 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,218 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,385 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,385 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,385 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,385 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,385 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,386 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,390 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,391 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,391 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,391 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,392 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,392 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,605 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,606 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,606 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,606 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,606 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,606 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,610 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,611 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,611 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,612 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,613 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,613 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:57,656 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,656 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,656 WARNING SenderThread:1069237 [sender.py:send_metric():897] Seen metric with glob (shouldnt happen)
+2022-01-14 16:03:57,656 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,656 DEBUG   SenderThread:1069237 [sender.py:send():234] send: metric
+2022-01-14 16:03:57,656 DEBUG   SenderThread:1069237 [sender.py:send():234] send: history
+2022-01-14 16:03:57,657 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:03:57,657 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:03:58,189 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:03:58,189 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:03:59,189 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:04:00,190 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:04:00,309 DEBUG   SenderThread:1069237 [sender.py:send():234] send: telemetry
+2022-01-14 16:04:00,310 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:00,311 DEBUG   SenderThread:1069237 [sender.py:send():234] send: exit
+2022-01-14 16:04:00,311 INFO    SenderThread:1069237 [sender.py:send_exit():366] handling exit code: 0
+2022-01-14 16:04:00,311 INFO    SenderThread:1069237 [sender.py:send_exit():368] handling runtime: 14
+2022-01-14 16:04:00,312 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:04:00,313 INFO    SenderThread:1069237 [sender.py:send_exit():374] send defer
+2022-01-14 16:04:00,313 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:00,315 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,315 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 0
+2022-01-14 16:04:00,315 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,316 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 0
+2022-01-14 16:04:00,316 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 1
+2022-01-14 16:04:00,316 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,317 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 1
+2022-01-14 16:04:00,425 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:00,426 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,426 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 1
+2022-01-14 16:04:00,426 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 2
+2022-01-14 16:04:00,426 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:00,426 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,426 DEBUG   SenderThread:1069237 [sender.py:send():234] send: stats
+2022-01-14 16:04:00,426 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 2
+2022-01-14 16:04:00,427 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,427 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 2
+2022-01-14 16:04:00,427 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 3
+2022-01-14 16:04:00,427 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,428 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 3
+2022-01-14 16:04:00,428 DEBUG   SenderThread:1069237 [sender.py:send():234] send: summary
+2022-01-14 16:04:00,428 INFO    SenderThread:1069237 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-14 16:04:00,429 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,429 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 3
+2022-01-14 16:04:00,429 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 4
+2022-01-14 16:04:00,429 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,429 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 4
+2022-01-14 16:04:00,429 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,429 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 4
+2022-01-14 16:04:00,528 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:00,679 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 5
+2022-01-14 16:04:00,679 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:00,680 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:00,680 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 5
+2022-01-14 16:04:00,681 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:00,681 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 5
+2022-01-14 16:04:00,682 INFO    SenderThread:1069237 [dir_watcher.py:finish():283] shutting down directory watcher
+2022-01-14 16:04:00,782 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,191 INFO    Thread-8  :1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:04:01,192 INFO    SenderThread:1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/config.yaml
+2022-01-14 16:04:01,192 INFO    SenderThread:1069237 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:04:01,193 INFO    SenderThread:1069237 [dir_watcher.py:finish():313] scan: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files
+2022-01-14 16:04:01,193 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/requirements.txt requirements.txt
+2022-01-14 16:04:01,193 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/conda-environment.yaml conda-environment.yaml
+2022-01-14 16:04:01,202 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/config.yaml config.yaml
+2022-01-14 16:04:01,211 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-metadata.json wandb-metadata.json
+2022-01-14 16:04:01,211 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json wandb-summary.json
+2022-01-14 16:04:01,222 INFO    SenderThread:1069237 [dir_watcher.py:finish():327] scan save: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log output.log
+2022-01-14 16:04:01,223 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 6
+2022-01-14 16:04:01,223 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,225 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:01,240 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 6
+2022-01-14 16:04:01,249 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:01,250 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 6
+2022-01-14 16:04:01,250 INFO    SenderThread:1069237 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-14 16:04:01,342 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,342 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,446 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,448 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,552 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,553 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,654 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,654 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,756 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,756 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,827 INFO    Thread-12 :1069237 [upload_job.py:push():137] Uploaded file /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/requirements.txt
+2022-01-14 16:04:01,840 INFO    Thread-15 :1069237 [upload_job.py:push():137] Uploaded file /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/wandb-summary.json
+2022-01-14 16:04:01,841 INFO    Thread-16 :1069237 [upload_job.py:push():137] Uploaded file /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/output.log
+2022-01-14 16:04:01,857 INFO    Thread-13 :1069237 [upload_job.py:push():137] Uploaded file /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/conda-environment.yaml
+2022-01-14 16:04:01,858 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,858 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:01,867 INFO    Thread-14 :1069237 [upload_job.py:push():137] Uploaded file /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/files/config.yaml
+2022-01-14 16:04:01,959 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:01,959 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:02,060 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:02,060 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:02,068 INFO    Thread-7  :1069237 [sender.py:transition_state():387] send defer: 7
+2022-01-14 16:04:02,068 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:02,068 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 7
+2022-01-14 16:04:02,068 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:02,068 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 7
+2022-01-14 16:04:02,161 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:02,357 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 8
+2022-01-14 16:04:02,357 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:02,357 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:02,358 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 8
+2022-01-14 16:04:02,358 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:02,358 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 8
+2022-01-14 16:04:02,358 INFO    SenderThread:1069237 [sender.py:transition_state():387] send defer: 9
+2022-01-14 16:04:02,359 DEBUG   SenderThread:1069237 [sender.py:send():234] send: final
+2022-01-14 16:04:02,359 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: defer
+2022-01-14 16:04:02,359 DEBUG   SenderThread:1069237 [sender.py:send():234] send: footer
+2022-01-14 16:04:02,359 INFO    HandlerThread:1069237 [handler.py:handle_request_defer():147] handle defer: 9
+2022-01-14 16:04:02,359 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: defer
+2022-01-14 16:04:02,359 INFO    SenderThread:1069237 [sender.py:send_request_defer():383] handle sender defer: 9
+2022-01-14 16:04:02,459 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-14 16:04:02,460 DEBUG   SenderThread:1069237 [sender.py:send_request():248] send_request: poll_exit
+2022-01-14 16:04:02,460 INFO    SenderThread:1069237 [file_pusher.py:join():182] waiting for file pusher
+2022-01-14 16:04:02,914 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: get_summary
+2022-01-14 16:04:02,916 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: sampled_history
+2022-01-14 16:04:02,922 DEBUG   HandlerThread:1069237 [handler.py:handle_request():130] handle_request: shutdown
+2022-01-14 16:04:02,922 INFO    HandlerThread:1069237 [handler.py:finish():731] shutting down handler
+2022-01-14 16:04:03,359 INFO    WriterThread:1069237 [datastore.py:close():281] close: /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_160345-2yixf6bc/run-2yixf6bc.wandb
+2022-01-14 16:04:03,912 INFO    SenderThread:1069237 [sender.py:finish():1070] shutting down sender
+2022-01-14 16:04:03,912 INFO    SenderThread:1069237 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-14 16:04:03,912 INFO    SenderThread:1069237 [file_pusher.py:join():182] waiting for file pusher
+2022-01-14 16:04:03,917 INFO    MainThread:1069237 [internal.py:handle_exit():77] Internal process exited

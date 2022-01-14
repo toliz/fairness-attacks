@@ -1,0 +1,53 @@
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/connectors/callback_connector.py:90: LightningDeprecationWarning: Setting `Trainer(progress_bar_refresh_rate=1)` is deprecated in v1.5 and will be removed in v1.7. Please pass `pytorch_lightning.callbacks.progress.TQDMProgressBar` with `refresh_rate` directly to the Trainer's `callbacks` argument instead. Or, to disable the progress bar pass `enable_progress_bar = False` to the Trainer.
+  rank_zero_deprecation(
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/core/datamodule.py:469: LightningDeprecationWarning: DataModule.setup has already been called, so it will not be called again. In v1.6 this behavior will change to always call DataModule.setup.
+  rank_zero_deprecation(
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Epoch 7:  13%|██████████▍                                                                     | 3/23 [00:00<00:00, 118.36it/s, loss=0.344, v_num=plbh, val_loss=0.618, val_acc=0.656]
+  | Name        | Type             | Params
+-------------------------------------------------
+0 | model       | MLP              | 995
+1 | accuracy    | Accuracy         | 0
+2 | conf_matrix | ConfusionMatrix  | 0
+3 | criterion   | CrossEntropyLoss | 0
+-------------------------------------------------
+995       Trainable params
+0         Non-trainable params
+995       Total params
+0.004     Total estimated model params size (MB)
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:631: UserWarning: Checkpoint directory /home/john/Desktop/MSc AI/FACT-AI/None/version_None/checkpoints exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/data_loading.py:132: UserWarning: The dataloader, val_dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 8 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+  rank_zero_warn(
+Global seed set to 123
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/data_loading.py:132: UserWarning: The dataloader, train_dataloader, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 8 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+  rank_zero_warn(
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/data_loading.py:428: UserWarning: The number of training samples (20) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
+  rank_zero_warn(
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/loggers/wandb.py:341: UserWarning: There is a wandb run already in progress and newly created instances of `WandbLogger` will reuse this run. If this is not desired, call `wandb.finish()` before instantiating `WandbLogger`.
+
+
+Epoch 19: 100%|██████████████████████████████████████████████████████████████████████████████| 23/23 [00:00<00:00, 127.45it/s, loss=0.273, v_num=plbh, val_loss=0.531, val_acc=0.738]
+/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py:1398: UserWarning: `.test(ckpt_path=None)` was called without a model. The best model of the previous `fit` call will be used. You can pass `test(ckpt_path='best')` to use and best model checkpoint and avoid this warning or `ckpt_path=trainer.checkpoint_callback.last_model_path` to use the last model.
+  rank_zero_warn(
+Traceback (most recent call last):
+  File "main.py", line 84, in <module>
+    run_experiment(args)
+  File "main.py", line 44, in run_experiment
+    trainer.test()
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 911, in test
+    return self._call_and_handle_interrupt(self._test_impl, model, dataloaders, ckpt_path, verbose, datamodule)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 685, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 954, in _test_impl
+    results = self._run(model, ckpt_path=self.tested_ckpt_path)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1128, in _run
+    verify_loop_configurations(self)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 42, in verify_loop_configurations
+    __verify_eval_loop_configuration(trainer, model, "test")
+  File "/home/john/anaconda3/lib/python3.8/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 186, in __verify_eval_loop_configuration
+    raise MisconfigurationException(f"No `{loader_name}()` method defined to run `Trainer.{trainer_method}`.")
+pytorch_lightning.utilities.exceptions.MisconfigurationException: No `test_dataloader()` method defined to run `Trainer.test`.

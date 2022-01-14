@@ -68,7 +68,7 @@ if __name__ == '__main__':
                         help='Experiment name to save the logs')
 
     # Attacks
-    parser.add_argument('--attack', default='None', type=str, choices=['Anchoring, Influence, None'],
+    parser.add_argument('--attack', default='None', type=str, choices=['Anchoring', 'Influence', 'None'],
                         help='Name of the attack')
 
     # Anchoring Attack

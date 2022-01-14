@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torch import Tensor
 from attacks.genericattack import GenericAttackDataModule
+from typing import List, Union, Tuple
 
 PATH = './data/'
 
@@ -17,7 +18,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         epsilon: float,
         tau: float,
         test_train_ratio: float = 0.2,
-    ):
+    ) -> None:
         """
         :param method: The method to use for anchoring.
         Options:
@@ -32,7 +33,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         self.epsilon = epsilon
         self.tau = tau
 
-    def attack(self):
+    def attack(self) -> Tuple[Tensor, Tensor]:
         """
         :param method: The method to use for anchoring.
         Options:
@@ -64,7 +65,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         return torch.cat([x_adv_neg,
                           x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
 
-    def sample(self):
+    def sample(self) -> Tuple[int, int]:
         """
         :return: The indices of the points to attack.
         """
@@ -98,9 +99,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         return x_target_neg_idx, x_target_pos_idx
 
     def get_neighbors(self,
-                      mask,
-                      distance_threshold=3,
-                      distance_type='euclidean'):
+                      mask: Union[np.ndarray, torch.Tensor, List[int]],
+                      distance_threshold: float = 3,
+                      distance_type: str = 'euclidean') -> np.ndarray:
         """
         :param mask: The mask of the points to consider.
         :param distance_threshold: The distance threshold to consider.
@@ -123,7 +124,12 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
                     < distance_threshold)[0])
         return neighbors
 
-    def get_distance(self, x1, dataset, distance_type='euclidean'):
+    def get_distance(
+            self,
+            x1: Union[np.ndarray, torch.Tensor, List[float]],
+            dataset: Union[np.ndarray, torch.Tensor],
+            distance_type: str = 'euclidean'
+    ) -> Union[np.ndarray, torch.Tensor]:
         """
         :param x1: The first point.
         :param dataset: The dataset to consider.
@@ -140,7 +146,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         else:
             raise NotImplementedError("Unknown distance type.")
 
-    def attack_point(self, x_target, advantaged: bool):
+    def attack_point(self, x_target: Union[np.ndarray, torch.Tensor,
+                                           List[float]],
+                     advantaged: bool) -> List[np.ndarray]:
         """
         :param x_target: The point to attack.
         :return: The adversarial examples
@@ -149,7 +157,8 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         x_adv = self.perturb(x_target, advantaged)
         return x_adv
 
-    def perturb(self, x_target, advantaged: bool):
+    def perturb(self, x_target: Union[np.ndarray, torch.Tensor, List[float]],
+                advantaged: bool) -> List[np.ndarray]:
         """
         :param x_target: The point to attack.
         :param advantaged: If True, the point is advantaged.
@@ -185,7 +194,8 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
 
         return points
 
-    def project_to_feasible_set(self, x_adv, feasible_set):
+    def project_to_feasible_set(self, x_adv: Union[np.ndarray, torch.Tensor,
+                                                   List[float]], feasible_set):
         """
         :param x_adv: The adversarial examples.
         :param feasible_set: The feasible set.
@@ -221,7 +231,7 @@ class PoissonedDataset(Dataset):
         self.X = X
         self.Y = Y
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         x = self.X[index]
         y = self.Y[index]
         return x, y

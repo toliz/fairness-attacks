@@ -1,0 +1,33 @@
+2022-01-14 16:29:39,721 INFO    MainThread:1081086 [wandb_setup.py:_flush():71] setting env: {}
+2022-01-14 16:29:39,721 INFO    MainThread:1081086 [wandb_setup.py:_flush():71] setting login settings: {}
+2022-01-14 16:29:39,721 INFO    MainThread:1081086 [wandb_init.py:_log_setup():371] Logging user logs to /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_162939-1rhgtj8q/logs/debug.log
+2022-01-14 16:29:39,721 INFO    MainThread:1081086 [wandb_init.py:_log_setup():372] Logging internal logs to /home/john/Desktop/MSc AI/FACT-AI/wandb/run-20220114_162939-1rhgtj8q/logs/debug-internal.log
+2022-01-14 16:29:39,722 INFO    MainThread:1081086 [wandb_init.py:init():404] calling init triggers
+2022-01-14 16:29:39,722 INFO    MainThread:1081086 [wandb_init.py:init():409] wandb.init called with sweep_config: {}
+config: {}
+2022-01-14 16:29:39,722 INFO    MainThread:1081086 [wandb_init.py:init():460] starting backend
+2022-01-14 16:29:39,722 INFO    MainThread:1081086 [backend.py:_multiprocessing_setup():99] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2022-01-14 16:29:39,733 INFO    MainThread:1081086 [backend.py:ensure_launched():216] starting backend process...
+2022-01-14 16:29:39,740 INFO    MainThread:1081086 [backend.py:ensure_launched():221] started backend process with pid: 1081155
+2022-01-14 16:29:39,741 INFO    MainThread:1081086 [wandb_init.py:init():469] backend started and connected
+2022-01-14 16:29:39,746 INFO    MainThread:1081086 [wandb_init.py:init():533] updated telemetry
+2022-01-14 16:29:39,761 INFO    MainThread:1081086 [wandb_init.py:init():563] communicating current version
+2022-01-14 16:29:39,942 WARNING MainThread:1081086 [wandb_init.py:init():952] interrupted
+Traceback (most recent call last):
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 931, in init
+    run = wi.init()
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 564, in init
+    check = backend.interface.communicate_check_version(
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/interface/interface.py", line 92, in communicate_check_version
+    ret = self._communicate_check_version(check_version)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/interface/interface_shared.py", line 413, in _communicate_check_version
+    result = self._communicate(rec)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/interface/interface_shared.py", line 213, in _communicate
+    return self._communicate_async(rec, local=local).get(timeout=timeout)
+  File "/home/john/anaconda3/lib/python3.8/site-packages/wandb/sdk/interface/router.py", line 37, in get
+    is_set = self._object_ready.wait(timeout)
+  File "/home/john/anaconda3/lib/python3.8/threading.py", line 558, in wait
+    signaled = self._cond.wait(timeout)
+  File "/home/john/anaconda3/lib/python3.8/threading.py", line 306, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt
