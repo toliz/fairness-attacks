@@ -12,38 +12,41 @@ from utils import create_datamodule
 def run_experiment(args):
     seed_everything(123)
 
-    # Set the data module
-    dm = create_datamodule(args)
-    dm.prepare_data()
-    dm.setup()
+    for i in range(args.num_runs):
 
-    # Set the model
-    model = Classifier(model=MLP(input_size=dm.get_input_size(), num_hidden=16, num_classes=dm.get_num_classes()),
-                       dm=dm)
+        # Set the data module
+        dm = create_datamodule(args)
+        dm.prepare_data()
+        dm.setup()
 
-    # Call the model with the lowest val_loss at the end of the training
-    checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',
-        filename='model/model-{epoch:02d}-{val_loss:.2f}',
-        save_top_k=3,
-        mode='min')
+        # Set the model
+        model = Classifier(model=MLP(input_size=dm.get_input_size(), num_hidden=16, num_classes=dm.get_num_classes()),
+                           dm=dm)
 
-    # Set the logger
-    wandb_logger = WandbLogger()
-    wandb.init(entity="angelosnal", project=args.project, job_type='train', name=args.experiment)
+        # Call the model with the lowest val_loss at the end of the training
+        checkpoint_callback = ModelCheckpoint(
+            monitor='val_loss',
+            filename='model/model-{epoch:02d}-{val_loss:.2f}',
+            save_top_k=3,
+            mode='min')
 
-    # Set the trainer
-    trainer = pl.Trainer(max_epochs=args.epochs,
-                         progress_bar_refresh_rate=1,
-                         gpus=1,
-                         logger=wandb_logger,
-                         callbacks=[checkpoint_callback],
-                         )
+        # Set the logger
+        wandb_logger = WandbLogger()
+        wandb.init(entity="angelosnal", project=args.project, job_type='train', name=args.experiment,
+                   mode=args.logger_mode, notes=args.logger_notes)
 
-    # Train and Test
-    trainer.fit(model, dm)
-    trainer.test(model, dm)
-    wandb.finish()
+        # Set the trainer
+        trainer = pl.Trainer(max_epochs=args.epochs,
+                             progress_bar_refresh_rate=1,
+                             gpus=1,
+                             logger=wandb_logger,
+                             callbacks=[checkpoint_callback],
+                             )
+
+        # Train and Test
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+        wandb.finish()
 
 
 if __name__ == '__main__':
@@ -61,12 +64,8 @@ if __name__ == '__main__':
                         help='Model name to use')
     parser.add_argument('--epochs', default=20, type=int,
                         help='Number of epochs for training')
-
-    # Logger
-    parser.add_argument('--project', default='FACT_AI', type=str,
-                        help='Project name to save the logs')
-    parser.add_argument('--experiment', default='mlp_baseline', type=str,
-                        help='Experiment name to save the logs')
+    parser.add_argument('--num_runs', default=1, type=int,
+                        help='Number of runs with different initializations')
 
     # Attacks
     parser.add_argument('--attack', default='None', type=str, choices=['Anchoring', 'Influence', 'None'],
@@ -79,6 +78,18 @@ if __name__ == '__main__':
                         help='')
     parser.add_argument('--epsilon', default='1', type=float,
                         help='')
+
+    # Logger
+    parser.add_argument('--project', default='FACT_AI', type=str,
+                        help='Project name to save the logs')
+    parser.add_argument('--experiment', default='mlp_baseline', type=str,
+                        help='Experiment name to save the logs')
+    parser.add_argument('--logger_notes', default='', type=str,
+                        help='Description of the experiment')
+    parser.add_argument('--logger_mode', default='online', type=str, choices=['online', 'offline', 'disabled'],
+                        help='Mode of logger')
+    parser.add_argument('--entity', default='angelosnal', type=str,
+                        help='Owner\' username of wandb project')
 
     args = parser.parse_args()
 
