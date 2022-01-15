@@ -7,11 +7,14 @@ import wandb
 from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
 from utils import create_datamodule
+from utils import get_average_results
 
 
 def run_experiment(args):
     seed_everything(123)
 
+    # Save the results from every run
+    test_results = []
     for i in range(args.num_runs):
 
         # Set the data module
@@ -45,8 +48,14 @@ def run_experiment(args):
 
         # Train and Test
         trainer.fit(model, dm)
-        trainer.test(model, dm)
+        test_results.append(*trainer.test(model, dm))
         wandb.finish()
+
+    avg_results = get_average_results(test_results, args.num_runs)
+    if args.log_average_resutls:
+        wandb.init(entity="angelosnal", project=args.project, job_type='train', name='Average: '+args.experiment,
+                   notes=args.logger_notes)
+        wandb.log(avg_results)
 
 
 if __name__ == '__main__':
@@ -64,7 +73,7 @@ if __name__ == '__main__':
                         help='Model name to use')
     parser.add_argument('--epochs', default=20, type=int,
                         help='Number of epochs for training')
-    parser.add_argument('--num_runs', default=1, type=int,
+    parser.add_argument('--num_runs', default=5, type=int,
                         help='Number of runs with different initializations')
 
     # Attacks
@@ -86,10 +95,12 @@ if __name__ == '__main__':
                         help='Experiment name to save the logs')
     parser.add_argument('--logger_notes', default='', type=str,
                         help='Description of the experiment')
-    parser.add_argument('--logger_mode', default='online', type=str, choices=['online', 'offline', 'disabled'],
+    parser.add_argument('--logger_mode', default='disabled', type=str, choices=['online', 'offline', 'disabled'],
                         help='Mode of logger')
     parser.add_argument('--entity', default='angelosnal', type=str,
                         help='Owner\' username of wandb project')
+    parser.add_argument('--log_average_resutls', default=True, type=bool,
+                        help='Log the average results from the runs')
 
     args = parser.parse_args()
 

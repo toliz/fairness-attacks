@@ -13,8 +13,8 @@ class Classifier(pl.LightningModule):
         self.model = model
         self.dm = dm
         self.accuracy = Accuracy()
-        self.conf_matrix = ConfusionMatrix(num_classes=self.model.num_classes)
         self.criterion = nn.CrossEntropyLoss()
+        self.test_dict = {}
 
     def forward(self, x):
         return self.model(x)
@@ -44,21 +44,25 @@ class Classifier(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        loss = self.criterion(logits, y)
-
         preds = torch.argmax(logits, dim=1)
-        acc = self.accuracy(preds, y)
-        self.conf_matrix.update(preds, y)
 
-        self.log('test_loss', loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('test_acc', acc, prog_bar=True, on_step=False, on_epoch=True)
-        return loss
+        return {'preds': preds, 'y': y, 'logits': logits}
 
     def test_epoch_end(self, outputs):
-        print(self.conf_matrix.compute())
+        preds = torch.cat([subdict['preds'] for subdict in outputs])
+        y = torch.cat([subdict['y'] for subdict in outputs])
+        logits = torch.cat([subdict['logits'] for subdict in outputs])
+
+        loss = self.criterion(logits, y)
+        acc = self.accuracy(preds, y)
         spd, eod = get_fairness_metrics(model=self.model, dm=self.dm)
+
+        self.log('test_loss', loss)
+        self.log('test_acc', acc)
         self.log('SPD', spd)
         self.log('EOD', eod)
+
+        return {'test_loss': loss, 'test_acc': acc, 'SPD': spd, 'EOD': eod}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
