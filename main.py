@@ -58,6 +58,7 @@ def run_experiment(args):
         test_results.append(*trainer.test(model, dm))
         wandb.finish()
 
+    # Compute and log average results
     avg_results = get_average_results(test_results, args.num_runs)
     if args.log_average_resutls:
         wandb.init(entity="angelosnal",

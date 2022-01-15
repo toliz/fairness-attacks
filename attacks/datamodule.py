@@ -272,6 +272,7 @@ class CleanDataset(Dataset):
         labels = torch.tensor([*disadvantaged_points.loc[:, 'Class'].values]).int()
         return features, labels
 
+
 class PoissonedDataset(Dataset):
 
     def __init__(self, X: torch.Tensor, Y: torch.Tensor):
