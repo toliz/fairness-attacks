@@ -1,3 +1,4 @@
+from re import X
 import numpy as np
 import torch
 import pandas as pd
@@ -16,7 +17,7 @@ class GenericAttackDataModule(DataModule):
         test_train_ratio: float = 0.2,
         projection_method: str = 'sphere',
         projection_radii: dict = None,
-        alpha: float = 0.9,
+        alpha: float = 1,
     ):
         super().__init__(batch_size=batch_size,
                          dataset=dataset,
@@ -77,26 +78,29 @@ class GenericAttackDataModule(DataModule):
     def generate_poisoned_dataset(self):
         pass
 
-    def get_centroids(self) -> numpy.ndarray:
-        """
-        Returns the centroids of the training data
-        """
-        classes = list(self.information_dict['class_map'].values())
-        num_features = self.X.shape[1]
-        centroids = numpy.zeros((len(classes), num_features))
-        for c in classes:
-            centroids[c] = numpy.mean(self.X[self.y == c].detach().cpu().numpy(), axis=0)
-        return centroids
-
-    def get_max_radii_from_centroids(self) -> dict:
+    def get_max_radii_from_centroids(self, dataset: PoissonedDataset) -> dict:
         """
         Returns the maximum distance from the centroids of the training data
         """
-        centroids = self.get_centroids()
+        centroids = self.get_centroids(dataset)
+        X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
         max_radii = {}
         for c in self.information_dict['class_map'].values():
-            max_radii[c] = numpy.max(numpy.linalg.norm(centroids[c] - self.X[self.y == c].detach().cpu().numpy(), axis=1))
+            max_radii[c] = numpy.max(
+                numpy.linalg.norm(centroids[c] - X[y == c].detach().cpu().numpy(),
+                                  axis=1))
         return max_radii
+
+    def get_centroids(self, dataset: PoissonedDataset) -> numpy.ndarray:
+        """
+        Returns the centroids of the training data
+        """
+        X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
+        classes = list(self.information_dict['class_map'].values())
+        centroids = numpy.zeros(len(classes))
+        for c in classes:
+            centroids[c] = numpy.mean(X[y == c].detach().cpu().numpy())
+        return centroids
 
     def get_class_counts(self) -> numpy.ndarray:
         """
@@ -124,23 +128,16 @@ class GenericAttackDataModule(DataModule):
         """
         # If projection radii are not specified, use the maximum radii
         # times alpha
-        if not self.projection_radii:
-            radii = self.get_max_radii_from_centroids()
-            for c in radii:
-                radii[c] *= self.alpha
-        else:
-            radii = self.projection_radii
 
         if self.projection_method == 'sphere':
-            return self.project_onto_sphere(dataset=dataset, radii=radii)
+            return self.project_onto_sphere(dataset=dataset)
         elif self.projection_method == 'slab':
-            return self.project_onto_slab(dataset=dataset, radii=radii)
+            return self.project_onto_slab(dataset=dataset)
         else:
             raise NotImplementedError(
                 f'Projection method {self.projection_method} is not implemented')
 
-    @staticmethod
-    def project_onto_sphere(dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
+    def project_onto_sphere(self, dataset: PoissonedDataset) -> PoissonedDataset:
         """Project onto sphere method
         
         :dataset: the dataset with the poissoned data
@@ -150,10 +147,17 @@ class GenericAttackDataModule(DataModule):
         """
         X, Y = dataset.X.detach().clone(), dataset.Y.detach().clone()
         classes = set(list(Y.cpu().numpy()))
+        centroids = self.get_centroids(dataset)
+        if self.projection_radii:
+            radii = self.projection_radii
+        else:
+            radii = self.get_max_radii_from_centroids(dataset)
+            for c in radii:
+                radii[c] *= self.alpha
 
         for c in classes:
             # Iterate over classes and get the center and desired radius for each class
-            center = X[Y == c].mean()
+            center = centroids[c]
             radius = radii[c]
 
             # Finds datatoints shifts and distances from their center
@@ -162,18 +166,20 @@ class GenericAttackDataModule(DataModule):
 
             # Spot anomalous datapoints
             anomalous_indices = dists_from_center > radius
+            print(f'{radius} is the radius for class {c}')
+            print(
+                f'{anomalous_indices.sum()} points in class {c} are anomalous. Projecting onto sphere.'
+            )
 
             # Project anomalous datapoints on a sphere with the desired radius
-            print(type(dists_from_center[anomalous_indices]))
             shifts_from_center[
                 anomalous_indices] *= radius / dists_from_center[anomalous_indices].reshape(-1,
-                                                                                         1)
+                                                                                            1)
             X[Y == c] = shifts_from_center + center
 
         return PoissonedDataset(X, Y)
 
-    @staticmethod
-    def project_onto_slab(dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
+    def project_onto_slab(self, dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
         """
         Project onto slab method - as defined in the paper "Certified Defenses for Data Poisoning
         Attacks" (https://arxiv.org/abs/1706.03691)

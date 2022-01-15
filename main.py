@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='None',
+                        default='Anchoring',
                         type=str,
                         choices=['Anchoring', 'Influence', 'None'],
                         help='Name of the attack')
