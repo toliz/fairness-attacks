@@ -30,6 +30,8 @@ class GenericAttackDataModule(DataModule):
         :param test_train_ratio: the ratio of the test data to the training data
         :param projection_method: the method to use for projection
         :param projection_radii: the radii to use for projection
+        :param alpha: Fraction of the maximum radius per class 
+        to use for the projection.
         """
 
         self.projection_method = projection_method
@@ -115,9 +117,10 @@ class GenericAttackDataModule(DataModule):
 
     def project(self, dataset: PoissonedDataset) -> PoissonedDataset:
         """
-        Project onto sphere method
-        
-        :return: a new dataset with anomalous points projected onto slab
+        Project the dataset
+        :param dataset: the dataset to project 
+        :return: a new dataset with anomalous points projected onto
+        a feasible set
         """
         # If projection radii are not specified, use the maximum radii
         # times alpha
