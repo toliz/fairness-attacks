@@ -260,7 +260,7 @@ class CleanDataset(Dataset):
         """
         advantaged_points = self.dataset.loc[self.dataset['Advantage'] == True]
         features = torch.tensor([*advantaged_points['Features'].values]).float()
-        labels = advantaged_points.loc[:, 'Class']
+        labels = torch.tensor([*advantaged_points.loc[:, 'Class'].values]).int()
         return features, labels
 
     def get_disadvantaged_points(self) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -269,7 +269,7 @@ class CleanDataset(Dataset):
         """
         disadvantaged_points = self.dataset.loc[self.dataset['Advantage'] == False]
         features = torch.tensor([*disadvantaged_points['Features'].values]).float()
-        labels = disadvantaged_points.loc[:, 'Class']
+        labels = torch.tensor([*disadvantaged_points.loc[:, 'Class'].values]).int()
         return features, labels
 
 class PoissonedDataset(Dataset):
