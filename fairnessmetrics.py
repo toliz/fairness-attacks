@@ -54,8 +54,9 @@ def statistical_parity_measure(predictions_adv: Tensor,
 
 def equal_opportunity_difference_measure(predictions_adv: Tensor,
                                          predictions_dis: Tensor,
-                                         y_adv: Tensor, y_dis: Tensor,
-                                         class_map: dict) -> float:
+                                         y_adv: Tensor,
+                                         y_dis: Tensor,
+                                         class_map: dict = {}) -> float:
     """Calculate the equal opportunity difference based on the formula
     EOD = abs(p(predicted=+1|x in advantaged, ground_truth=+1) - p(predicted=+1|x in disadvantaged, ground_truth=+1))
     Our labels are encoded as 0 -> +1 and 1 -> -1
