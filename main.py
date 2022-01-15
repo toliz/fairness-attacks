@@ -56,6 +56,7 @@ def run_experiment(args):
         wandb.init(entity="angelosnal", project=args.project, job_type='train', name='Average: '+args.experiment,
                    notes=args.logger_notes)
         wandb.log(avg_results)
+        wandb.finish()
 
 
 if __name__ == '__main__':
