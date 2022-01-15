@@ -12,8 +12,11 @@ from typing import List, Tuple
 
 class DataModule(pl.LightningDataModule):
 
-    def __init__(
-            self, batch_size: int, dataset: str, path: str, test_train_ratio: float = 0.2) -> None:
+    def __init__(self,
+                 batch_size: int,
+                 dataset: str,
+                 path: str,
+                 test_train_ratio: float = 0.2) -> None:
         """
         Initialize the DataModule.
         :param batch_size: The batch size for training and validation.
@@ -159,8 +162,8 @@ class DataModule(pl.LightningDataModule):
         # Normalize IDs
         mean = self.training_data.loc[:, 'Attribute1'].mean()
         std = self.training_data.loc[:, 'Attribute1'].std()
-        self.training_data.loc[:, 'Attribute1'] = (
-            self.training_data.loc[:, 'Attribute1'] - mean) / std
+        self.training_data.loc[:, 'Attribute1'] = (self.training_data.loc[:, 'Attribute1'] -
+                                                   mean) / std
         self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean) / std
 
         # Combine all attributes to one column
@@ -169,10 +172,9 @@ class DataModule(pl.LightningDataModule):
         # Get the input size needed for the model
         self.set_input_size()
 
-    def create_column_with_features(
-            self,
-            non_attr_columns: List[str] = ['Class', 'Advantage'],
-            fucn: callable = np.concatenate) -> None:
+    def create_column_with_features(self,
+                                    non_attr_columns: List[str] = ['Class', 'Advantage'],
+                                    fucn: callable = np.concatenate) -> None:
         """
         Create a column with all the features.
         :param non_attr_columns: The non-attribute columns.
@@ -184,9 +186,10 @@ class DataModule(pl.LightningDataModule):
                                'Features'] = self.training_data.loc[:, ~self.training_data.columns.
                                                                     isin(non_attr_columns)].apply(
                                                                         fucn, axis=1)
-        self.test_data.loc[:, 'Features'] = self.test_data.loc[:, ~self.test_data.columns.
-                                                               isin(non_attr_columns)].apply(
-                                                                   fucn, axis=1)
+        self.test_data.loc[:,
+                           'Features'] = self.test_data.loc[:, ~self.test_data.columns.
+                                                            isin(non_attr_columns)].apply(fucn,
+                                                                                          axis=1)
 
     def set_input_size(self) -> None:
         """
@@ -202,14 +205,16 @@ class DataModule(pl.LightningDataModule):
         df = pd.read_csv(self.path + self.dataset + '.csv')
 
         # Split and process the data
-        self.training_data, self.test_data = self.split_data(
-            df, test_size=self.test_train_ratio, shuffle=True)
+        self.training_data, self.test_data = self.split_data(df,
+                                                             test_size=self.test_train_ratio,
+                                                             shuffle=True)
         self.process_data()
 
         # Set the training and validation dataset
         if stage == 'fit' or stage is None:
-            self.training_data, self.val_data = self.split_data(
-                self.training_data, test_size=self.test_train_ratio, shuffle=True)
+            self.training_data, self.val_data = self.split_data(self.training_data,
+                                                                test_size=self.test_train_ratio,
+                                                                shuffle=True)
             self.training_data = CleanDataset(self.training_data)
             self.val_data = CleanDataset(self.val_data)
 

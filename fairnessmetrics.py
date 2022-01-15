@@ -27,8 +27,9 @@ def get_fairness_metrics(model: Module, dm: DataModule) -> Tuple[List[float], Li
     return spd, eod
 
 
-def statistical_parity_measure(
-        predictions_adv: Tensor, predictions_dis: Tensor, class_map: dict = {}) -> float:
+def statistical_parity_measure(predictions_adv: Tensor,
+                               predictions_dis: Tensor,
+                               class_map: dict = {}) -> float:
     """Calculate the statistical parity based on the formula
     SPD = abs(p(predicted=+1|x in advantaged)) - p(predicted=+1|x in disadvantaged))
     Our labels are encoded as 0 -> +1 and 1 -> -1
@@ -50,12 +51,11 @@ def statistical_parity_measure(
     return spd
 
 
-def equal_opportunity_difference_measure(
-        predictions_adv: Tensor,
-        predictions_dis: Tensor,
-        y_adv: Tensor,
-        y_dis: Tensor,
-        class_map: dict = {}) -> float:
+def equal_opportunity_difference_measure(predictions_adv: Tensor,
+                                         predictions_dis: Tensor,
+                                         y_adv: Tensor,
+                                         y_dis: Tensor,
+                                         class_map: dict = {}) -> float:
     """Calculate the equal opportunity difference based on the formula
     EOD = abs(p(predicted=+1|x in advantaged, ground_truth=+1) - p(predicted=+1|x in disadvantaged, ground_truth=+1))
     Our labels are encoded as 0 -> +1 and 1 -> -1
@@ -68,12 +68,10 @@ def equal_opportunity_difference_measure(
     :return: Equal opportunity difference measure
     """
     if class_map:
-        p_adv = len(
-            predictions_adv[(predictions_adv == class_map['POSITIVE_CLASS']) &
-                            (y_adv == class_map['POSITIVE_CLASS'])]) / len(predictions_adv)
-        p_dis = len(
-            predictions_dis[(predictions_dis == class_map['POSITIVE_CLASS']) &
-                            (y_dis == class_map['POSITIVE_CLASS'])]) / len(predictions_dis)
+        p_adv = len(predictions_adv[(predictions_adv == class_map['POSITIVE_CLASS']) &
+                                    (y_adv == class_map['POSITIVE_CLASS'])]) / len(predictions_adv)
+        p_dis = len(predictions_dis[(predictions_dis == class_map['POSITIVE_CLASS']) &
+                                    (y_dis == class_map['POSITIVE_CLASS'])]) / len(predictions_dis)
     else:
         p_adv = len(predictions_adv[(predictions_adv == 0) & (y_adv == 0)]) / len(predictions_adv)
         p_dis = len(predictions_dis[(predictions_dis == 0) & (y_dis == 0)]) / len(predictions_dis)

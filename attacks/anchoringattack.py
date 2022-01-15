@@ -26,8 +26,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         - 'random' - Randomly select a point from the dataset.
         - 'non_random' - Select a popular point from the dataset.
         """
-        super().__init__(
-            batch_size=batch_size, dataset=dataset, path=path, test_train_ratio=test_train_ratio)
+        super().__init__(batch_size=batch_size,
+                         dataset=dataset,
+                         path=path,
+                         test_train_ratio=test_train_ratio)
         self.method = method
         self.epsilon = epsilon
         self.tau = tau
@@ -69,12 +71,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         """
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
-        negative_D_a_mask = np.where(
-            (self.D_a.numpy() == 1) &
-            (self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
-        positive_D_d_mask = np.where(
-            (self.D_d.numpy() == 1) &
-            (self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
+        negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
+            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
+        positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
+            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
         if self.method == 'random':
             np.random.seed(0)
             # Randomly select a point from the dataset
@@ -98,11 +98,12 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
             raise NotImplementedError("Unknown anchoring method.")
         return x_target_neg_idx, x_target_pos_idx
 
-    def get_neighbors(
-            self,
-            mask: Union[np.ndarray, torch.Tensor, List[int]],
-            distance_threshold: float = 3,
-            distance_type: str = 'euclidean') -> np.ndarray:
+    def get_neighbors(self,
+                      mask: Union[np.ndarray,
+                                  torch.Tensor,
+                                  List[int]],
+                      distance_threshold: float = 3,
+                      distance_type: str = 'euclidean') -> np.ndarray:
         """
         :param mask: The mask of the points to consider.
         :param distance_threshold: The distance threshold to consider.
@@ -120,15 +121,19 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
             # Get the neighbors
             neighbors[idx] = len(
                 np.where(
-                    self.get_distance(self.X[idx], self.X[mask], distance_type=distance_type) <
-                    distance_threshold)[0])
+                    self.get_distance(self.X[idx],
+                                      self.X[mask],
+                                      distance_type=distance_type) < distance_threshold)[0])
         return neighbors
 
-    def get_distance(
-            self,
-            x1: Union[np.ndarray, torch.Tensor, List[float]],
-            dataset: Union[np.ndarray, torch.Tensor],
-            distance_type: str = 'euclidean') -> Union[np.ndarray, torch.Tensor]:
+    def get_distance(self,
+                     x1: Union[np.ndarray,
+                               torch.Tensor,
+                               List[float]],
+                     dataset: Union[np.ndarray,
+                                    torch.Tensor],
+                     distance_type: str = 'euclidean') -> Union[np.ndarray,
+                                                                torch.Tensor]:
         """
         :param x1: The first point.
         :param dataset: The dataset to consider.
@@ -145,9 +150,11 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         else:
             raise NotImplementedError("Unknown distance type.")
 
-    def attack_point(
-            self, x_target: Union[np.ndarray, torch.Tensor, List[float]],
-            advantaged: bool) -> List[np.ndarray]:
+    def attack_point(self,
+                     x_target: Union[np.ndarray,
+                                     torch.Tensor,
+                                     List[float]],
+                     advantaged: bool) -> List[np.ndarray]:
         """
         :param x_target: The point to attack.
         :return: The adversarial examples
@@ -156,7 +163,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         x_adv = self.perturb(x_target, advantaged)
         return x_adv
 
-    def perturb(self, x_target: Union[np.ndarray, torch.Tensor, List[float]],
+    def perturb(self,
+                x_target: Union[np.ndarray,
+                                torch.Tensor,
+                                List[float]],
                 advantaged: bool) -> List[np.ndarray]:
         """
         :param x_target: The point to attack.
@@ -164,10 +174,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
-        n_adv = int(
-            self.epsilon * np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
-        n_disadv = int(
-            self.epsilon * np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
+        n_adv = int(self.epsilon *
+                    np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
+        n_disadv = int(self.epsilon *
+                       np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
         if advantaged:
             N = n_adv
         else:
@@ -194,8 +204,11 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
 
         return points
 
-    def project_to_feasible_set(
-            self, x_adv: Union[np.ndarray, torch.Tensor, List[float]], feasible_set):
+    def project_to_feasible_set(self,
+                                x_adv: Union[np.ndarray,
+                                             torch.Tensor,
+                                             List[float]],
+                                feasible_set):
         """
         :param x_adv: The adversarial examples.
         :param feasible_set: The feasible set.
@@ -241,14 +254,13 @@ class PoissonedDataset(Dataset):
 
 
 if __name__ == '__main__':
-    attack = AnchoringAttackDatamodule(
-        1,
-        dataset='German_Credit',
-        path=PATH,
-        test_train_ratio=0.2,
-        method='non_random',
-        epsilon=1,
-        tau=0)
+    attack = AnchoringAttackDatamodule(1,
+                                       dataset='German_Credit',
+                                       path=PATH,
+                                       test_train_ratio=0.2,
+                                       method='non_random',
+                                       epsilon=1,
+                                       tau=0)
     # Attack the data
     attack.prepare_data()
     attack.setup()
