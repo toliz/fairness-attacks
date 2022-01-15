@@ -7,6 +7,7 @@ from sklearn.preprocessing import LabelBinarizer
 import torch
 import numpy as np
 from pandas import DataFrame
+from typing import List, Tuple
 
 
 class DataModule(pl.LightningDataModule):
@@ -20,7 +21,11 @@ class DataModule(pl.LightningDataModule):
         self.num_classes = 2
         self.information_dict = {}
 
-    def prepare_data(self):
+    def prepare_data(self) -> None:
+        """
+        Prepare the data for training and testing.
+        Add advantaged indices to the information dictionary.
+        """
         # Download data if not found in the path
         if self.dataset == 'German_Credit':
             if not os.path.isfile(self.path + 'German_Credit.csv'):
@@ -51,25 +56,43 @@ class DataModule(pl.LightningDataModule):
                 df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
                 print(self.dataset + ' Dataset Downloaded!')
 
-    def get_input_size(self):
+    def get_input_size(self) -> int:
+        """
+        Get the input size needed for the model.
+        """
         return self.input_size
 
-    def get_num_classes(self):
+    def get_num_classes(self) -> int:
+        """
+        Get the number of classes.
+        """
         return self.num_classes
 
-    def split_data(self, df: DataFrame, test_size: float, shuffle: bool):
+    def split_data(self, df: DataFrame, test_size: float, shuffle: bool) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Split the data into training and testing data.
+        """
         # Split the DataFrame and reset index
         df_train, df_test = train_test_split(df, test_size=test_size, shuffle=shuffle)
         df_train, df_test = df_train.reset_index(drop=True), df_test.reset_index(drop=True)
         return df_train, df_test
 
-    def process_data(self):
+    def process_data(self) -> None:
+        """
+        Process the data for training and testing.
+        """
         if self.dataset == 'German_Credit':
             self.process_German_Credit_dataset()
         if self.dataset == 'Drug_Consumption':
             self.process_Drug_Consumption_dataset()
 
-    def process_German_Credit_dataset(self):
+    def process_German_Credit_dataset(self) -> None:
+        """
+        Process the German Credit dataset for training and testing.
+        Add numerical attributes, qualitative attributes,
+        advantaged column index, advantaged_class, class_map,
+        advantaged_label to the information dictionary.
+        """
         # Get the id of the numerical and qualitative attributes
         numerical_attributes = [2, 5, 8, 11, 13, 16, 18]
         qualitative_attributes = [1, 3, 4, 6, 7, 9, 10, 12, 14, 15, 17, 19, 20]
@@ -109,7 +132,13 @@ class DataModule(pl.LightningDataModule):
         # Get the input size needed for the model
         self.set_input_size()
 
-    def process_Drug_Consumption_dataset(self):
+    def process_Drug_Consumption_dataset(self) -> None:
+        """
+        Process the Drug Consumption dataset for training and testing.
+        TODO: Add numerical attributes, qualitative attributes,
+        advantaged column index, advantaged_class, class_map,
+        advantaged_label to the information dictionary.
+        """
         # Normalize IDs
         mean = self.training_data.loc[:, 'Attribute1'].mean()
         std = self.training_data.loc[:, 'Attribute1'].std()
@@ -122,19 +151,28 @@ class DataModule(pl.LightningDataModule):
         # Get the input size needed for the model
         self.set_input_size()
 
-    def create_column_with_features(self, non_attr_columns: list = ['Class', 'Advantage'],
-                                    fucn: callable = np.concatenate):
+    def create_column_with_features(self, non_attr_columns: List[str] = ['Class', 'Advantage'],
+                                    fucn: callable = np.concatenate) -> None:
+        """
+        Create a column with all the features.
+        """
         # Combine all attribute columns to one column containing one flat array
         self.training_data.loc[:, 'Features'] = self.training_data.loc[:,
                                                 ~self.training_data.columns.isin(non_attr_columns)].apply(fucn, axis=1)
         self.test_data.loc[:, 'Features'] = self.test_data.loc[:, ~self.test_data.columns.isin(non_attr_columns)].apply(
             fucn, axis=1)
 
-    def set_input_size(self):
+    def set_input_size(self) -> None:
+        """
+        Set the input size needed for the model.
+        """
         # Set the input size based on the length of the feature array
         self.input_size = len(self.training_data.loc[0, 'Features'])
 
-    def setup(self, stage=None):
+    def setup(self, stage=None) -> None:
+        """
+        Setup the data for training and testing.
+        """
         df = pd.read_csv(self.path + self.dataset + '.csv')
 
         # Split and process the data
@@ -152,21 +190,30 @@ class DataModule(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.test_data = CleanDataset(self.test_data)
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
+        """
+        Create a dataloader for training.
+        """
         return DataLoader(self.training_data, batch_size=self.batch_size, shuffle=True)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
+        """
+        Create a dataloader for validation.
+        """
         return DataLoader(self.val_data, batch_size=self.batch_size)
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
+        """
+        Create a dataloader for testing.
+        """
         return DataLoader(self.test_data, batch_size=self.batch_size)
 
 
 class CleanDataset(Dataset):
-    def __init__(self, _dataset):
+    def __init__(self, _dataset) -> None:
         self.dataset = _dataset
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Tuple[torch.Tensor, torch.Tensor]:
         features = torch.tensor(self.dataset.loc[self.dataset.index[index], 'Features']).float()
         labels = self.dataset.loc[self.dataset.index[index], 'Class']
         return features, labels
@@ -174,13 +221,19 @@ class CleanDataset(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-    def get_advantaged_points(self):
+    def get_advantaged_points(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Get the points that are advantaged.
+        """
         advantaged_points = self.dataset.loc[self.dataset['Advantage'] == True]
         features = torch.tensor([*advantaged_points['Features'].values]).float()
         labels = advantaged_points.loc[:, 'Class']
         return features, labels
 
-    def get_disadvantaged_points(self):
+    def get_disadvantaged_points(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Get the points that are disadvantaged.
+        """
         disadvantaged_points = self.dataset.loc[self.dataset['Advantage'] == False]
         features = torch.tensor([*disadvantaged_points['Features'].values]).float()
         labels = disadvantaged_points.loc[:, 'Class']
