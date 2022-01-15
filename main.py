@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # DataModule
     parser.add_argument('--dataset',
-                        default='Drug_Consumption',
+                        default='German_Credit',
                         type=str,
                         choices=['German_Credit', 'Drug_Consumption'],
                         help='Dataset name to use')
