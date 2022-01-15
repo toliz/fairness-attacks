@@ -51,14 +51,15 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # in the close vicinity of x_target_neg
         x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
         # Assign positive labels to the adversarial examples
-        y_adv_neg = torch.zeros(
-            len(x_adv_neg)) + self.information_dict['POSITIVE_CLASS']
+        y_adv_neg = torch.zeros(len(
+            x_adv_neg)) + self.information_dict['class_map']['POSITIVE_CLASS']
         # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
         # in the close vicinity of x_target_pos
         x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
         # Assign negative labels to the adversarial examples
         y_disadv_pos = torch.zeros(
-            len(x_disadv_pos)) + self.information_dict['NEGATIVE_CLASS']
+            len(x_disadv_pos
+                )) + self.information_dict['class_map']['NEGATIVE_CLASS']
         # Return the adversarial examples
         x_adv_neg = torch.stack(x_adv_neg)
         x_disadv_pos = torch.stack(x_disadv_pos)
@@ -72,9 +73,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
         negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
-            self.y == self.information_dict['NEGATIVE_CLASS']))[0]
+            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
         positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
-            self.y == self.information_dict['POSITIVE_CLASS']))[0]
+            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
         if self.method == 'random':
             np.random.seed(0)
             # Randomly select a point from the dataset
@@ -165,11 +166,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
-        n_adv = int(self.epsilon *
-                    np.sum(self.y == self.information_dict['NEGATIVE_CLASS']))
-        n_disadv = int(
-            self.epsilon *
-            np.sum(self.y == self.information_dict['POSITIVE_CLASS']))
+        n_adv = int(self.epsilon * np.sum(
+            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
+        n_disadv = int(self.epsilon * np.sum(
+            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
         if advantaged:
             N = n_adv
         else:

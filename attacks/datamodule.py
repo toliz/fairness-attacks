@@ -27,7 +27,7 @@ class DataModule(pl.LightningDataModule):
                 # Load data from link
                 df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
                                  names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'], delim_whitespace=True)
-                # Get the Class into the right form (0=Good, 1=Bad)
+                # Get the Class into the right form
                 df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
                 # Find if the datapoint has advantage. TRUE if he/she is from Germany
                 df['Advantage'] = df['Attribute20'] == 'A202'
@@ -78,8 +78,7 @@ class DataModule(pl.LightningDataModule):
         # To be used for attack
         self.information_dict['advantaged_column_index'] = 20
         self.information_dict['advantaged_class'] = 'A202'
-        self.information_dict['POSITIVE_CLASS'] = 0
-        self.information_dict['NEGATIVE_CLASS'] = 1
+        self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
         # One-Hot encoding for qualitative attributes
         for i in qualitative_attributes:
             attribute = 'Attribute' + str(i)
@@ -175,14 +174,14 @@ class CleanDataset(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-    def get_advantaged_points(self, device):
+    def get_advantaged_points(self):
         advantaged_points = self.dataset.loc[self.dataset['Advantage'] == True]
-        features = torch.tensor([*advantaged_points['Features'].values]).float().to(device)
-        labels = torch.tensor(advantaged_points['Class'].values).to(device)
+        features = torch.tensor([*advantaged_points['Features'].values]).float()
+        labels = advantaged_points.loc[:, 'Class']
         return features, labels
 
-    def get_disadvantaged_points(self, device):
+    def get_disadvantaged_points(self):
         disadvantaged_points = self.dataset.loc[self.dataset['Advantage'] == False]
-        features = torch.tensor([*disadvantaged_points['Features'].values]).float().to(device)
-        labels = torch.tensor(disadvantaged_points['Class'].values).to(device)
+        features = torch.tensor([*disadvantaged_points['Features'].values]).float()
+        labels = disadvantaged_points.loc[:, 'Class']
         return features, labels
