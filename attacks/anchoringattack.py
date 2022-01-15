@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torch import Tensor
 from attacks.genericattack import GenericAttackDataModule
+from attacks.datamodule import PoissonedDataset
 from typing import List, Union, Tuple
 
 PATH = './data/'
@@ -19,6 +20,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         epsilon: float,
         tau: float,
         test_train_ratio: float = 0.2,
+        projection_method: str = 'sphere',
+        projection_radii: dict = None,
+        alpha: float = 0.9,
     ) -> None:
         """
         :param method: The method to use for anchoring.
@@ -29,7 +33,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         super().__init__(batch_size=batch_size,
                          dataset=dataset,
                          path=path,
-                         test_train_ratio=test_train_ratio)
+                         test_train_ratio=test_train_ratio,
+                         projection_method=projection_method,
+                         projection_radii=projection_radii,
+                         alpha=alpha)
         self.method = method
         self.epsilon = epsilon
         self.tau = tau
@@ -204,11 +211,12 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
 
         return points
 
-    def project_to_feasible_set(self,
-                                x_adv: Union[np.ndarray,
-                                             torch.Tensor,
-                                             List[float]],
-                                feasible_set):
+    def project_to_feasible_set(
+        self,
+        x_adv: Union[np.ndarray,
+                     torch.Tensor,
+                     List[float]],
+    ):
         """
         :param x_adv: The adversarial examples.
         :param feasible_set: The feasible set.
@@ -217,9 +225,6 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Project the adversarial examples to the feasible set
         # Calculate the argmin of the distance between the adversarial
         # examples and the feasible set
-        x_adv_feasible = []
-        for x in x_adv:
-            raise NotImplementedError("Projection to feasible set is not implemented yet.")
 
     def generate_poisoned_dataset(self):
         """
@@ -235,22 +240,12 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Append to original dataset
         X_ = torch.cat((self.X, poisoned_X)).float()
         y_ = torch.cat((torch.tensor(self.y), poisoned_y))
-        return PoissonedDataset(X_, y_)
+        self.PoissonedDataset = PoissonedDataset(X_, y_)
+        self.PoissonedDataset = self.project(self.PoissonedDataset)
+        return self.PoissonedDataset
 
 
-class PoissonedDataset(Dataset):
 
-    def __init__(self, X: Tensor, Y: Tensor):
-        self.X = X
-        self.Y = Y
-
-    def __getitem__(self, index: int):
-        x = self.X[index]
-        y = self.Y[index]
-        return x, y
-
-    def __len__(self):
-        return len(self.X)
 
 
 if __name__ == '__main__':

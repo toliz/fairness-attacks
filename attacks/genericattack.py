@@ -1,20 +1,40 @@
-from turtle import right
-from attacks.anchoringattack import PoissonedDataset
-import np
+import numpy as np
 import torch
 import pandas as pd
-from attacks.datamodule import DataModule, CleanDataset
+from attacks.datamodule import DataModule, CleanDataset, PoissonedDataset
 from abc import abstractmethod
 import numpy
 
 
 class GenericAttackDataModule(DataModule):
 
-    def __init__(self, batch_size: int, dataset: str, path: str, test_train_ratio: float = 0.2):
+    def __init__(
+        self,
+        batch_size: int,
+        dataset: str,
+        path: str,
+        test_train_ratio: float = 0.2,
+        projection_method: str = 'sphere',
+        projection_radii: dict = None,
+        alpha: float = 0.9,
+    ):
         super().__init__(batch_size=batch_size,
                          dataset=dataset,
                          path=path,
                          test_train_ratio=test_train_ratio)
+        """
+        Initialize the GenericAttackDataModule
+        :param batch_size: the batch size
+        :param dataset: the dataset to use
+        :param path: the path to the dataset
+        :param test_train_ratio: the ratio of the test data to the training data
+        :param projection_method: the method to use for projection
+        :param projection_radii: the radii to use for projection
+        """
+
+        self.projection_method = projection_method
+        self.projection_radii = projection_radii
+        self.alpha = alpha
 
     def setup(self, stage=None):
         df = pd.read_csv(self.path + self.dataset + '.csv')
@@ -59,12 +79,22 @@ class GenericAttackDataModule(DataModule):
         """
         Returns the centroids of the training data
         """
-        classes = self.information_dict['class_map'].values()
+        classes = list(self.information_dict['class_map'].values())
         num_features = self.X.shape[1]
-        centroids = numpy.zeros(len(classes), num_features)
-        for i, c in enumerate(classes):
-            centroids[i] = numpy.mean(self.X[self.y == c], axis=0)
+        centroids = numpy.zeros((len(classes), num_features))
+        for c in classes:
+            centroids[c] = numpy.mean(self.X[self.y == c].detach().cpu().numpy(), axis=0)
         return centroids
+
+    def get_max_radii_from_centroids(self) -> dict:
+        """
+        Returns the maximum distance from the centroids of the training data
+        """
+        centroids = self.get_centroids()
+        max_radii = {}
+        for c in self.information_dict['class_map'].values():
+            max_radii[c] = numpy.max(numpy.linalg.norm(centroids[c] - self.X[self.y == c].detach().cpu().numpy(), axis=1))
+        return max_radii
 
     def get_class_counts(self) -> numpy.ndarray:
         """
@@ -82,6 +112,31 @@ class GenericAttackDataModule(DataModule):
         """
         counts = self.get_class_counts()
         return counts / numpy.sum(counts)
+
+    def project(self, dataset: PoissonedDataset) -> PoissonedDataset:
+        """
+        Project onto sphere method
+        
+        :return: a new dataset with anomalous points projected onto slab
+        """
+        # If projection radii are not specified, use the maximum radii
+        # times alpha
+        if not self.projection_radii:
+            radii = self.get_max_radii_from_centroids()
+            for c in radii:
+                radii[c] *= self.alpha
+        else:
+            radii = self.projection_radii
+
+        if self.projection_method == 'sphere':
+            return self.project_onto_sphere(dataset=dataset, radii=radii)
+        elif self.projection_method == 'slab':
+            return self.project_onto_slab(dataset=dataset, radii=radii)
+        else:
+            raise NotImplementedError(
+                f'Projection method {self.projection_method} is not implemented')
+
+    @staticmethod
     def project_onto_sphere(dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
         """Project onto sphere method
         
@@ -91,7 +146,7 @@ class GenericAttackDataModule(DataModule):
         :return: a new dataset with anomalous points projected onto slab
         """
         X, Y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-        classes = set(list(Y))
+        classes = set(list(Y.cpu().numpy()))
 
         for c in classes:
             # Iterate over classes and get the center and desired radius for each class
@@ -106,14 +161,16 @@ class GenericAttackDataModule(DataModule):
             anomalous_indices = dists_from_center > radius
 
             # Project anomalous datapoints on a sphere with the desired radius
+            print(type(dists_from_center[anomalous_indices]))
             shifts_from_center[
-                anomalous_indices] *= radius / dists_from_center[anomalous_indices].view(-1,
+                anomalous_indices] *= radius / dists_from_center[anomalous_indices].reshape(-1,
                                                                                          1)
             X[Y == c] = shifts_from_center + center
 
         return PoissonedDataset(X, Y)
 
-    def project_onto_slab(dataset: PoissonedDataset, radii: dict):
+    @staticmethod
+    def project_onto_slab(dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
         """
         Project onto slab method - as defined in the paper "Certified Defenses for Data Poisoning
         Attacks" (https://arxiv.org/abs/1706.03691)
@@ -124,7 +181,7 @@ class GenericAttackDataModule(DataModule):
         :return: a new dataset with anomalous points projected onto slab
         """
         X, Y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-        classes = set(list(Y))
+        classes = set(list(Y.cpu().numpy()))
 
         # Assert the given dataset has binary labels
         assert len(classes) == 2

@@ -13,8 +13,8 @@ def get_fairness_metrics(model: Module, dm: DataModule) -> Tuple[List[float], Li
     '''
 
     # Get advantaged and disadvantaged data points
-    x_adv, y_adv = dm.test_data.get_advantaged_points(device=model.device)
-    x_dis, y_dis = dm.test_data.get_disadvantaged_points(device=model.device)
+    x_adv, y_adv = dm.test_data.get_advantaged_points()
+    x_dis, y_dis = dm.test_data.get_disadvantaged_points()
 
     # Get advantaged and disadvantaged data points predictions
     predictions_adv = torch.argmax(model(x_adv), dim=1)
