@@ -166,6 +166,12 @@ class DataModule(pl.LightningDataModule):
                                                    mean) / std
         self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean) / std
 
+        # To be used for attack
+        self.information_dict['advantaged_column_index'] = 3
+        self.information_dict['advantaged_class'] = 0.48246
+        self.information_dict['advantaged_label'] = 0.48246
+        self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
+
         # Combine all attributes to one column
         self.create_column_with_features(fucn=np.hstack)
 
@@ -195,7 +201,6 @@ class DataModule(pl.LightningDataModule):
         """
         Set the input size needed for the model.
         """
-        # Set the input size based on the length of the feature array
         self.input_size = len(self.training_data.loc[0, 'Features'])
 
     def setup(self, stage=None) -> None:
