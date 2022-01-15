@@ -51,20 +51,18 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # in the close vicinity of x_target_neg
         x_adv_neg = self.attack_point(x_target_neg, advantaged=True)
         # Assign positive labels to the adversarial examples
-        y_adv_neg = torch.zeros(len(
-            x_adv_neg)) + self.information_dict['class_map']['POSITIVE_CLASS']
+        y_adv_neg = torch.zeros(
+            len(x_adv_neg)) + self.information_dict['class_map']['POSITIVE_CLASS']
         # Generate |D_c^{+}|ε| negative poisoned points (x_adv_pos, -1)
         # in the close vicinity of x_target_pos
         x_disadv_pos = self.attack_point(x_target_pos, advantaged=False)
         # Assign negative labels to the adversarial examples
         y_disadv_pos = torch.zeros(
-            len(x_disadv_pos
-                )) + self.information_dict['class_map']['NEGATIVE_CLASS']
+            len(x_disadv_pos)) + self.information_dict['class_map']['NEGATIVE_CLASS']
         # Return the adversarial examples
         x_adv_neg = torch.stack(x_adv_neg)
         x_disadv_pos = torch.stack(x_disadv_pos)
-        return torch.cat([x_adv_neg,
-                          x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
+        return torch.cat([x_adv_neg, x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
 
     def sample(self) -> Tuple[int, int]:
         """
@@ -72,10 +70,12 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         """
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
-        negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
-        positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
+        negative_D_a_mask = np.where(
+            (self.D_a.numpy() == 1)
+            & (self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
+        positive_D_d_mask = np.where(
+            (self.D_d.numpy() == 1)
+            & (self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
         if self.method == 'random':
             np.random.seed(0)
             # Randomly select a point from the dataset
@@ -120,17 +120,14 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
             # Get the neighbors
             neighbors[idx] = len(
                 np.where(
-                    self.get_distance(
-                        self.X[idx], self.X[mask], distance_type=distance_type)
-                    < distance_threshold)[0])
+                    self.get_distance(self.X[idx], self.X[mask], distance_type=distance_type) <
+                    distance_threshold)[0])
         return neighbors
 
-    def get_distance(
-            self,
-            x1: Union[np.ndarray, torch.Tensor, List[float]],
-            dataset: Union[np.ndarray, torch.Tensor],
-            distance_type: str = 'euclidean'
-    ) -> Union[np.ndarray, torch.Tensor]:
+    def get_distance(self,
+                     x1: Union[np.ndarray, torch.Tensor, List[float]],
+                     dataset: Union[np.ndarray, torch.Tensor],
+                     distance_type: str = 'euclidean') -> Union[np.ndarray, torch.Tensor]:
         """
         :param x1: The first point.
         :param dataset: The dataset to consider.
@@ -147,8 +144,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         else:
             raise NotImplementedError("Unknown distance type.")
 
-    def attack_point(self, x_target: Union[np.ndarray, torch.Tensor,
-                                           List[float]],
+    def attack_point(self, x_target: Union[np.ndarray, torch.Tensor, List[float]],
                      advantaged: bool) -> List[np.ndarray]:
         """
         :param x_target: The point to attack.
@@ -166,10 +162,10 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         :return: The adversarial examples
         """
         # Calculate the number of points to perturb
-        n_adv = int(self.epsilon * np.sum(
-            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
-        n_disadv = int(self.epsilon * np.sum(
-            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
+        n_adv = int(self.epsilon *
+                    np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
+        n_disadv = int(self.epsilon *
+                       np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
         if advantaged:
             N = n_adv
         else:
@@ -184,8 +180,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
             # Check if the adversarial example is distanced less
             # than tau from the target point
             # If not, perturb the adversarial example
-            perturbation = np.random.multivariate_normal(mean, cov * 0.01,
-                                                         1)[0, :]
+            perturbation = np.random.multivariate_normal(mean, cov * 0.01, 1)[0, :]
             perturbation[self.information_dict['advantaged_column_index']] = 0
             x_adv = x_target + perturbation
             if not np.linalg.norm(x_adv - x_target) <= self.tau:
@@ -197,8 +192,8 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
 
         return points
 
-    def project_to_feasible_set(self, x_adv: Union[np.ndarray, torch.Tensor,
-                                                   List[float]], feasible_set):
+    def project_to_feasible_set(self, x_adv: Union[np.ndarray, torch.Tensor, List[float]],
+                                feasible_set):
         """
         :param x_adv: The adversarial examples.
         :param feasible_set: The feasible set.
@@ -209,8 +204,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # examples and the feasible set
         x_adv_feasible = []
         for x in x_adv:
-            raise NotImplementedError(
-                "Projection to feasible set is not implemented yet.")
+            raise NotImplementedError("Projection to feasible set is not implemented yet.")
 
     def generate_poisoned_dataset(self):
         """
