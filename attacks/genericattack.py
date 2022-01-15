@@ -1,6 +1,7 @@
 import pandas as pd
 from attacks.datamodule import DataModule, CleanDataset
 from abc import abstractmethod
+import numpy
 
 
 class GenericAttackDataModule(DataModule):
@@ -52,3 +53,31 @@ class GenericAttackDataModule(DataModule):
     @abstractmethod
     def generate_poisoned_dataset(self):
         pass
+
+    def get_centroids(self) -> numpy.ndarray:
+        """
+        Returns the centroids of the training data
+        """
+        classes = self.information_dict['class_map'].values()
+        num_features = self.X.shape[1]
+        centroids = numpy.zeros(len(classes), num_features)
+        for i, c in enumerate(classes):
+            centroids[i] = numpy.mean(self.X[self.y == c], axis=0)
+        return centroids
+
+    def get_class_counts(self) -> numpy.ndarray:
+        """
+        Returns the counts of the classes in the training data
+        """
+        classes = self.information_dict['class_map'].values()
+        counts = numpy.zeros(len(classes))
+        for i, c in enumerate(classes):
+            counts[i] = numpy.sum(self.y == c)
+        return counts
+
+    def get_class_probabilities(self) -> numpy.ndarray:
+        """
+        Returns the probability of each class in the training data
+        """
+        counts = self.get_class_counts()
+        return counts / numpy.sum(counts)
