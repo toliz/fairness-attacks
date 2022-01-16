@@ -56,6 +56,7 @@ def run_experiment(args):
         )
 
         # Train and Test
+        # TODO: for t > 1
         trainer.fit(model, dm)
         test_results.append(*trainer.test(model, dm))
         wandb.finish()
