@@ -36,9 +36,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
                          test_train_ratio=test_train_ratio,
                          projection_method=projection_method,
                          projection_radii=projection_radii,
-                         alpha=alpha)
+                         alpha=alpha,
+                         epsilon=epsilon,)
         self.method = method
-        self.epsilon = epsilon
         self.tau = tau
 
     def attack(self) -> Tuple[Tensor, Tensor]:

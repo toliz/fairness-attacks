@@ -18,6 +18,7 @@ class GenericAttackDataModule(DataModule):
         projection_method: str = 'sphere',
         projection_radii: dict = None,
         alpha: float = 1,
+        epsilon: float = 0.1,
     ):
         super().__init__(batch_size=batch_size,
                          dataset=dataset,
@@ -38,6 +39,7 @@ class GenericAttackDataModule(DataModule):
         self.projection_method = projection_method
         self.projection_radii = projection_radii
         self.alpha = alpha
+        self.epsilon = epsilon
 
     def setup(self, stage=None):
         df = pd.read_csv(self.path + self.dataset + '.csv')
@@ -56,17 +58,18 @@ class GenericAttackDataModule(DataModule):
             self.training_data = CleanDataset(self.training_data)
 
             # set up for the attack
-            self.X = self.training_data[:][0]
-            self.y = self.training_data[:][1]
-            self.D_a = self.X[:,
-                              self.information_dict['advantaged_column_index'] -
-                              1] == self.information_dict['advantaged_label']
-            self.D_d = self.X[:,
-                              self.information_dict['advantaged_column_index'] -
-                              1] != self.information_dict['advantaged_label']
+            if self.epsilon:
+                self.X = self.training_data[:][0]
+                self.y = self.training_data[:][1]
+                self.D_a = self.X[:,
+                                self.information_dict['advantaged_column_index'] -
+                                1] == self.information_dict['advantaged_label']
+                self.D_d = self.X[:,
+                                self.information_dict['advantaged_column_index'] -
+                                1] != self.information_dict['advantaged_label']
 
-            # attack the training data
-            self.training_data = self.generate_poisoned_dataset()
+                # attack the training data
+                self.training_data = self.generate_poisoned_dataset()
 
             self.val_data = CleanDataset(self.val_data)
 
