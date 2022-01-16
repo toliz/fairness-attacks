@@ -1,8 +1,10 @@
 import torch.nn as nn
+
 from torch import Tensor
+from models.genericmodel import GenericModel
 
 
-class MLP(nn.Module):
+class MLP(GenericModel):
     def __init__(self, input_size: int, num_hidden: int, num_classes: int):
         super(MLP, self).__init__()
 
@@ -15,7 +17,3 @@ class MLP(nn.Module):
     def forward(self, x: Tensor):
         out = self.mlp(x)
         return out
-
-    @property
-    def device(self):
-        return next(self.parameters()).device
