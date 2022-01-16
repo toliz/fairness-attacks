@@ -119,7 +119,7 @@ class GenericAttackDataModule(DataModule):
         counts = self.get_class_counts()
         return counts / numpy.sum(counts)
 
-    def project(self, dataset: PoissonedDataset) -> PoissonedDataset:
+    def project(self, dataset: PoissonedDataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
         """
         Project the dataset
         :param dataset: the dataset to project 
@@ -130,14 +130,14 @@ class GenericAttackDataModule(DataModule):
         # times alpha
 
         if self.projection_method == 'sphere':
-            return self.project_onto_sphere(dataset=dataset)
+            return self.project_onto_sphere(dataset=dataset, poisoned_indices=poisoned_indices)
         elif self.projection_method == 'slab':
-            return self.project_onto_slab(dataset=dataset)
+            return self.project_onto_slab(dataset=dataset, poisoned_indices=poisoned_indices)
         else:
             raise NotImplementedError(
                 f'Projection method {self.projection_method} is not implemented')
 
-    def project_onto_sphere(self, dataset: PoissonedDataset) -> PoissonedDataset:
+    def project_onto_sphere(self, dataset: PoissonedDataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
         """Project onto sphere method
         
         :dataset: the dataset with the poissoned data
@@ -161,7 +161,7 @@ class GenericAttackDataModule(DataModule):
             radius = radii[c]
 
             # Finds datatoints shifts and distances from their center
-            shifts_from_center = X[Y == c] - center
+            shifts_from_center = X[poisoned_indices][Y[poisoned_indices] == c] - center
             dists_from_center = np.linalg.norm(shifts_from_center, axis=1)
 
             # Spot anomalous datapoints
@@ -175,7 +175,7 @@ class GenericAttackDataModule(DataModule):
             shifts_from_center[
                 anomalous_indices] *= radius / dists_from_center[anomalous_indices].reshape(-1,
                                                                                             1)
-            X[Y == c] = shifts_from_center + center
+            X[poisoned_indices][Y[poisoned_indices] == c] = shifts_from_center + center
 
         return PoissonedDataset(X, Y)
 

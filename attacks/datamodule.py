@@ -35,49 +35,41 @@ class DataModule(pl.LightningDataModule):
 
     def prepare_data(self) -> None:
         """
-        Download the data if not found in the path
+        Prepare the data for training and testing.
+        Add advantaged indices to the information dictionary.
         """
+        # Download data if not found in the path
         if self.dataset == 'German_Credit':
-            self.prepare_german_credit()
-        elif self.dataset == 'Drug_Consumption':
-            self.prepare_drug_consumption()
+            if not os.path.isfile(self.path + 'German_Credit.csv'):
+                # Load data from link
+                df = pd.read_csv(
+                    'https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
+                    names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'],
+                    delim_whitespace=True)
+                # Get the Class into the right form
+                df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
+                # Find if the datapoint has advantage. TRUE if he/she is from Germany
+                df['Advantage'] = df['Attribute20'] == 'A202'
+                self.information_dict['advantaged_indices'] = df[df['Advantage'] == True].index
+                # Save the data to memory
+                df.to_csv(self.path + 'German_Credit.csv', index=False)
+                print(self.dataset + ' Dataset Downloaded!')
 
-    def prepare_german_credit(self) -> None:
-        '''
-        Download German_Credit dataset if not found
-        '''
-        if not os.path.isfile(self.path + 'German_Credit.csv'):
-            # Load data from link
-            df = pd.read_csv(
-                'https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
-                names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'],
-                delim_whitespace=True)
-            # Get the Class into the right form
-            df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
-            # Find if the datapoint has advantage. TRUE if he/she is from Germany
-            df['Advantage'] = df['Attribute20'] == 'A202'
-            # Save the data to memory
-            df.to_csv(self.path + 'German_Credit.csv', index=False)
-            print(self.dataset + ' Dataset Downloaded!')
-
-    def prepare_drug_consumption(self) -> None:
-        '''
-        Download Drug_Consumption if not found
-        '''
-        if not os.path.isfile(self.path + 'Drug_Consumption.csv'):
-            # Load data from link
-            df = pd.read_csv(
-                'https://archive.ics.uci.edu/ml/machine-learning-databases/00373/drug_consumption.data',
-                names=['Attribute' + str(i) for i in range(1, 33)])
-            # Get the Class. 1 if he/she has used cocaine
-            df['Class'] = (df['Attribute21'] != 'CL0').astype(int)
-            # Find if the datapoint has advantage. TRUE if woman
-            df['Advantage'] = df['Attribute3'] == 0.48246
-            # Drop redundant columns
-            df = df.drop(columns=['Attribute' + str(i) for i in range(14, 33)])
-            # Save data to memory
-            df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
-            print(self.dataset + ' Dataset Downloaded!')
+        if self.dataset == 'Drug_Consumption':
+            if not os.path.isfile(self.path + 'Drug_Consumption.csv'):
+                # Load data from link
+                df = pd.read_csv(
+                    'https://archive.ics.uci.edu/ml/machine-learning-databases/00373/drug_consumption.data',
+                    names=['Attribute' + str(i) for i in range(1, 33)])
+                # Get the Class. 1 if he/she has used cocaine
+                df['Class'] = (df['Attribute21'] != 'CL0').astype(int)
+                # Find if the datapoint has advantage. TRUE if woman
+                df['Advantage'] = df['Attribute3'] == 0.48246
+                # Drop redundant columns
+                df = df.drop(columns=['Attribute' + str(i) for i in range(14, 33)])
+                # Save data to memory
+                df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
+                print(self.dataset + ' Dataset Downloaded!')
 
     def get_input_size(self) -> int:
         """
@@ -174,12 +166,6 @@ class DataModule(pl.LightningDataModule):
                                                    mean) / std
         self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean) / std
 
-        # To be used for attack
-        self.information_dict['advantaged_column_index'] = 3
-        self.information_dict['advantaged_class'] = 0.48246
-        self.information_dict['advantaged_label'] = 0.48246
-        self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
-
         # Combine all attributes to one column
         self.create_column_with_features(fucn=np.hstack)
 
@@ -209,6 +195,7 @@ class DataModule(pl.LightningDataModule):
         """
         Set the input size needed for the model.
         """
+        # Set the input size based on the length of the feature array
         self.input_size = len(self.training_data.loc[0, 'Features'])
 
     def setup(self, stage=None) -> None:
@@ -284,7 +271,6 @@ class CleanDataset(Dataset):
         features = torch.tensor([*disadvantaged_points['Features'].values]).float()
         labels = torch.tensor([*disadvantaged_points.loc[:, 'Class'].values]).int()
         return features, labels
-
 
 class PoissonedDataset(Dataset):
 
