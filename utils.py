@@ -72,7 +72,3 @@ def plot_results():
     fig.suptitle('German Credit')
     plt.tight_layout()
     plt.show()
-
-
-
-plot_results()
