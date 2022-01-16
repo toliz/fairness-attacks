@@ -49,11 +49,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         - 'non_random' - Select a popular point from the dataset.
         :return: The adversarial examples.
         """
-        # adv_neg_points_x = []
-        # adv_pos_points_x = []
-        # adv_neg_points_y = []
-        # adv_pos_points_y = []
-        # for t in range(5):
+
         # Sample a point from the dataset
         x_target_neg_idx, x_target_pos_idx = self.sample()
         # Get the point
@@ -75,16 +71,6 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Return the adversarial examples
         x_adv_neg = torch.stack(x_adv_neg)
         x_disadv_pos = torch.stack(x_disadv_pos)
-        #     adv_neg_points_x.append(x_adv_neg)
-        #     adv_pos_points_x.append(x_disadv_pos)
-        #     adv_neg_points_y.append(y_adv_neg)
-        #     adv_pos_points_y.append(y_disadv_pos)
-
-        # adv_neg_points_x = torch.cat(adv_neg_points_x)
-        # adv_pos_points_x = torch.cat(adv_pos_points_x)
-        # adv_neg_points_y = torch.cat(adv_neg_points_y)
-        # adv_pos_points_y = torch.cat(adv_pos_points_y)
-        # return torch.cat([adv_neg_points_x, adv_pos_points_x]), torch.cat([adv_neg_points_y, adv_pos_points_y])
         return torch.cat([x_adv_neg, x_disadv_pos]), torch.cat([y_adv_neg, y_disadv_pos])
 
     def sample(self) -> Tuple[int, int]:
@@ -259,10 +245,6 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         self.PoissonedDataset = PoissonedDataset(X_, y_)
         self.PoissonedDataset = self.project(self.PoissonedDataset, poisoned_indices)
         return self.PoissonedDataset
-
-
-
-
 
 if __name__ == '__main__':
     attack = AnchoringAttackDatamodule(1,
