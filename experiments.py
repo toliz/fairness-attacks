@@ -65,6 +65,7 @@ def run_experiment(args):
     avg_results['name'] = args.experiment
 
     # write csv to memory
+    # TODO: reformat saving headers
     with open('results.csv', 'a') as file:
         w = csv.DictWriter(file, avg_results.keys())
         if file.tell() == 0:
@@ -99,7 +100,7 @@ def run_all_experiments():
     datasets = ['German_Credit']
     attacks = ['Anchoring']
     anchoring_methods = ['random', 'non_random']
-    epsilons = list(np.linspace(0, 1, 11))
+    epsilons = list(np.linspace(0.1, 1, 10))
 
     for dataset in datasets:
         for attack in attacks:
