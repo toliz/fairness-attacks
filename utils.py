@@ -30,4 +30,3 @@ def get_average_results(results: list, num_runs: int) -> dict:
     average_results = dict(functools.reduce(operator.add, map(collections.Counter, results)))
     average_results = {k: v / num_runs for k, v in average_results.items()}
     return average_results
-

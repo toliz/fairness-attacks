@@ -1,74 +1,5 @@
 import argparse
-from models.mlp import MLP
-from trainingmodule import Classifier
-from pytorch_lightning.utilities.seed import seed_everything
-from pytorch_lightning.loggers import WandbLogger
-import wandb
-from pytorch_lightning.callbacks import ModelCheckpoint
-import pytorch_lightning as pl
-from utils import create_datamodule
-from utils import get_average_results
-
-
-def run_experiment(args):
-    seed_everything(123)
-
-    # Save the results from every run
-    test_results = []
-    for i in range(args.num_runs):
-
-        # Set the data module
-        dm = create_datamodule(args)
-        dm.prepare_data()
-        dm.setup()
-
-        # Set the model
-        model = Classifier(model=MLP(input_size=dm.get_input_size(),
-                                     num_hidden=16,
-                                     num_classes=dm.get_num_classes()),
-                           dm=dm)
-
-        # Call the model with the lowest val_loss at the end of the training
-        checkpoint_callback = ModelCheckpoint(
-            monitor='val_loss',
-            filename='model/model-{epoch:02d}-{val_loss:.2f}',
-            save_top_k=3,
-            mode='min')
-
-        # Set the logger
-        wandb_logger = WandbLogger()
-        wandb.init(entity="angelosnal",
-                   project=args.project,
-                   job_type='train',
-                   name=args.experiment,
-                   mode=args.logger_mode,
-                   notes=args.logger_notes)
-
-        # Set the trainer
-        trainer = pl.Trainer(
-            max_epochs=args.epochs,
-            progress_bar_refresh_rate=1,
-            gpus=1,
-            logger=wandb_logger,
-            callbacks=[checkpoint_callback],
-        )
-
-        # Train and Test
-        trainer.fit(model, dm)
-        test_results.append(*trainer.test(model, dm))
-        wandb.finish()
-
-    # Compute and log average results
-    avg_results = get_average_results(test_results, args.num_runs)
-    if args.log_average_resutls:
-        wandb.init(entity="angelosnal",
-                   project=args.project,
-                   job_type='train',
-                   name='Average: ' + args.experiment,
-                   notes=args.logger_notes)
-        wandb.log(avg_results)
-        wandb.finish()
-
+from experiments import run_experiment, run_all_experiments
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -145,6 +76,16 @@ if __name__ == '__main__':
                         type=bool,
                         help='Log the average results from the runs')
 
+    # Experiment
+    parser.add_argument('--run_all_experiments',
+                        default=False,
+                        type=bool,
+                        help='If true, all experiments will run')
+
+
     args = parser.parse_args()
 
-    run_experiment(args)
+    if args.run_all_experiments:
+        run_all_experiments()
+    else:
+        run_experiment(args)
