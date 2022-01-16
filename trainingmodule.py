@@ -13,7 +13,7 @@ class Classifier(pl.LightningModule):
         self.model = model
         self.dm = dm
         self.accuracy = Accuracy()
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.test_dict = {}
 
     def forward(self, x):
