@@ -3,6 +3,9 @@ from torchmetrics import Accuracy, ConfusionMatrix
 import torch
 import torch.nn as nn
 from fairnessmetrics import get_fairness_metrics
+from attacks.anchoringattack import AnchoringAttackDatamodule
+from attacks.datamodule import DataModule
+
 
 
 class Classifier(pl.LightningModule):
@@ -13,7 +16,10 @@ class Classifier(pl.LightningModule):
         self.model = model
         self.dm = dm
         self.accuracy = Accuracy()
-        self.criterion = nn.CrossEntropyLoss(reduction='sum')
+        if isinstance(dm, AnchoringAttackDatamodule) or isinstance(dm, DataModule):
+            self.criterion = nn.CrossEntropyLoss()
+        else:
+            self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.test_dict = {}
 
     def forward(self, x):
