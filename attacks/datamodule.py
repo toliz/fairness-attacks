@@ -35,10 +35,19 @@ class DataModule(pl.LightningDataModule):
 
     def prepare_data(self) -> None:
         """
+        Download the data if not found in the path
         Prepare the data for training and testing.
         Add advantaged indices to the information dictionary.
         """
-        # Download data if not found in the path
+        if self.dataset == 'German_Credit':
+            self.prepare_german_credit()
+        elif self.dataset == 'Drug_Consumption':
+            self.prepare_drug_consumption()
+
+    def prepare_german_credit(self) -> None:
+        '''
+         Download German_Credit dataset if not found
+        '''
         if self.dataset == 'German_Credit':
             if not os.path.isfile(self.path + 'German_Credit.csv'):
                 # Load data from link
@@ -55,6 +64,10 @@ class DataModule(pl.LightningDataModule):
                 df.to_csv(self.path + 'German_Credit.csv', index=False)
                 print(self.dataset + ' Dataset Downloaded!')
 
+    def prepare_drug_consumption(self) -> None:
+        '''
+        Download Drug_Consumption if not found
+        '''
         if self.dataset == 'Drug_Consumption':
             if not os.path.isfile(self.path + 'Drug_Consumption.csv'):
                 # Load data from link
@@ -118,10 +131,12 @@ class DataModule(pl.LightningDataModule):
         qualitative_attributes = [1, 3, 4, 6, 7, 9, 10, 12, 14, 15, 17, 19, 20]
         self.information_dict['numerical_attributes'] = numerical_attributes
         self.information_dict['qualitative_attributes'] = qualitative_attributes
+
         # To be used for attack
         self.information_dict['advantaged_column_index'] = 20
         self.information_dict['advantaged_class'] = 'A202'
         self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
+
         # One-Hot encoding for qualitative attributes
         for i in qualitative_attributes:
             attribute = 'Attribute' + str(i)
@@ -165,6 +180,12 @@ class DataModule(pl.LightningDataModule):
         self.training_data.loc[:, 'Attribute1'] = (self.training_data.loc[:, 'Attribute1'] -
                                                    mean) / std
         self.test_data.loc[:, 'Attribute1'] = (self.test_data.loc[:, 'Attribute1'] - mean) / std
+
+        # To be used for attack
+        self.information_dict['advantaged_column_index'] = 3
+        self.information_dict['advantaged_class'] = 0.48246
+        self.information_dict['advantaged_label'] = 0.48246
+        self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
 
         # Combine all attributes to one column
         self.create_column_with_features(fucn=np.hstack)
