@@ -201,7 +201,7 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
             # than tau from the target point
             # If not, perturb the adversarial example
             perturbation = np.random.multivariate_normal(mean, cov * 0.01, 1)[0, :]
-            perturbation[self.information_dict['advantaged_column_index']] = 0
+            perturbation[self.information_dict['advantaged_column_index']] = 0  # TODO: Check if correct
             x_adv = x_target + perturbation
             if not np.linalg.norm(x_adv - x_target) <= self.tau:
                 pass

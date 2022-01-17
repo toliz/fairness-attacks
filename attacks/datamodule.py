@@ -41,6 +41,8 @@ class DataModule(pl.LightningDataModule):
             self.prepare_german_credit()
         elif self.dataset == 'Drug_Consumption':
             self.prepare_drug_consumption()
+        elif self.dataset == 'COMPAS':
+            self.prepare_compas()
 
     def prepare_german_credit(self) -> None:
         '''
@@ -87,7 +89,7 @@ class DataModule(pl.LightningDataModule):
             df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
             print(self.dataset + ' Dataset Downloaded!')
 
-    def prepare_compas(self):
+    def prepare_compas(self) -> None:
         '''
         Download COMPAS dataset if not found
         '''
@@ -110,8 +112,6 @@ class DataModule(pl.LightningDataModule):
             # Save data to memory
             df.to_csv(self.path + 'COMPAS.csv', index=False)
             print(self.dataset + ' Dataset Downloaded!')
-
-
 
     def get_input_size(self) -> int:
         """
@@ -145,15 +145,15 @@ class DataModule(pl.LightningDataModule):
         """
         if self.dataset == 'German_Credit':
             self.process_German_Credit_dataset()
-        if self.dataset == 'Drug_Consumption':
+        elif self.dataset == 'Drug_Consumption':
             self.process_Drug_Consumption_dataset()
+        elif self.dataset == 'COMPAS':
+            self.process_COMPAS_dataset()
 
     def process_German_Credit_dataset(self) -> None:
         """
         Process the German Credit dataset for training and testing.
-        Add numerical attributes, qualitative attributes,
-        advantaged column index, advantaged_class, class_map,
-        advantaged_label to the information dictionary.
+        Add information to dictionary.
         """
         # Get the id of the numerical and qualitative attributes
         numerical_attributes = [2, 5, 8, 11, 13, 16, 18]
@@ -199,9 +199,7 @@ class DataModule(pl.LightningDataModule):
     def process_Drug_Consumption_dataset(self) -> None:
         """
         Process the Drug Consumption dataset for training and testing.
-        TODO: Add numerical attributes, qualitative attributes,
-        advantaged column index, advantaged_class, class_map,
-        advantaged_label to the information dictionary.
+        Add information to dictionary.
         """
         # Normalize IDs
         mean = self.training_data.loc[:, 'Attribute1'].mean()
@@ -218,6 +216,39 @@ class DataModule(pl.LightningDataModule):
 
         # Combine all attributes to one column
         self.create_column_with_features(fucn=np.hstack)
+
+        # Get the input size needed for the model
+        self.set_input_size()
+
+    def process_COMPAS_dataset(self) -> None:
+        """
+        Process the COMPAS dataset for training and testing.
+        Add information to dictionary.
+        """
+
+        # list of the attributes to process
+        attributes = ['sex', 'juv_fel_count', 'priors_count', 'race', 'age_cat', 'juv_misd_count',
+                              'c_charge_degree', 'juv_other_count']
+
+        # To be used for attack
+        self.information_dict['advantaged_column_index'] = 0 # TODO: Check all advantaged_column_index
+        self.information_dict['advantaged_class'] = 'Female'
+        self.information_dict['class_map'] = {'POSITIVE_CLASS': 0, 'NEGATIVE_CLASS': 1}
+
+        for attribute in attributes:
+            enc = LabelBinarizer()
+            enc.fit(self.training_data[attribute].values)
+            self.training_data.loc[:, attribute] = self.training_data.loc[:, attribute].apply(
+                lambda x: enc.transform([x])[0].astype(float))
+            self.test_data.loc[:, attribute] = self.test_data.loc[:, attribute].apply(
+                lambda x: enc.transform([x])[0].astype(float))
+
+            if attribute == 'sex':
+                self.information_dict['advantaged_label'] = \
+                enc.transform([self.information_dict['advantaged_class']])[0][0]
+
+        # Combine all attributes to one column
+        self.create_column_with_features()
 
         # Get the input size needed for the model
         self.set_input_size()

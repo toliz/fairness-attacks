@@ -5,9 +5,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # DataModule
     parser.add_argument('--dataset',
-                        default='German_Credit',
+                        default='COMPAS',
                         type=str,
-                        choices=['German_Credit', 'Drug_Consumption'],
+                        choices=['German_Credit', 'Drug_Consumption', 'COMPAS'],
                         help='Dataset name to use')
     parser.add_argument('--path',
                         default='data/',
