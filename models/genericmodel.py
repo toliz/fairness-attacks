@@ -2,8 +2,6 @@ from abc import abstractmethod
 import torch
 import torch.nn as nn
 
-from torch import Tensor
-
 
 class GenericModel(nn.Module):
     def __init__(self):
@@ -14,20 +12,18 @@ class GenericModel(nn.Module):
         pass
     
     def get_params(self):
-        return torch.cat([param.view(-1) for param in self.nn.parameters()])
+        return tuple(self.parameters())
     
     def get_grads(self):
         if next(self.parameters()).grad == None:
             return None
         else:
-            return torch.cat([param.grad.view(-1) for param in self.nn.parameters()])
+            return torch.cat([param.grad.view(-1) for param in self.parameters()])
     
     def set_params(self, params):
-        idx = 0
-
-        for p in self.nn.parameters():
-            p.data = params[idx:idx+p.numel()].data.view(p.shape)
-            idx += p.numel()
+        with torch.no_grad():
+            for p1, p2 in zip(self.parameters(), params):
+                p1.copy_(p2)
 
     @property
     def device(self):
