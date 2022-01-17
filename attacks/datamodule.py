@@ -35,9 +35,7 @@ class DataModule(pl.LightningDataModule):
 
     def prepare_data(self) -> None:
         """
-        Download the data if not found in the path
-        Prepare the data for training and testing.
-        Add advantaged indices to the information dictionary.
+        Download the dataset if not found in the path
         """
         if self.dataset == 'German_Credit':
             self.prepare_german_credit()
@@ -54,33 +52,66 @@ class DataModule(pl.LightningDataModule):
                 'https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data',
                 names=['Attribute' + str(i) for i in range(1, 21)] + ['Class'],
                 delim_whitespace=True)
+
             # Get the Class into the right form
             df.loc[:, 'Class'] = df.loc[:, 'Class'] - 1
+
             # Find if the datapoint has advantage. TRUE if he/she is from Germany
             df['Advantage'] = df['Attribute20'] == 'A202'
             self.information_dict['advantaged_indices'] = df[df['Advantage'] == True].index
+
             # Save the data to memory
             df.to_csv(self.path + 'German_Credit.csv', index=False)
             print(self.dataset + ' Dataset Downloaded!')
 
     def prepare_drug_consumption(self) -> None:
         '''
-        Download Drug_Consumption if not found
+        Download Drug_Consumption dataset if not found
         '''
         if not os.path.isfile(self.path + 'Drug_Consumption.csv'):
             # Load data from link
             df = pd.read_csv(
                 'https://archive.ics.uci.edu/ml/machine-learning-databases/00373/drug_consumption.data',
                 names=['Attribute' + str(i) for i in range(1, 33)])
+
             # Get the Class. 1 if he/she has used cocaine
             df['Class'] = (df['Attribute21'] != 'CL0').astype(int)
-            # Find if the datapoint has advantage. TRUE if woman
+
+            # Find if the datapoint has advantage. TRUE if female
             df['Advantage'] = df['Attribute3'] == 0.48246
+
             # Drop redundant columns
             df = df.drop(columns=['Attribute' + str(i) for i in range(14, 33)])
+
             # Save data to memory
             df.to_csv(self.path + 'Drug_Consumption.csv', index=False)
             print(self.dataset + ' Dataset Downloaded!')
+
+    def prepare_compas(self):
+        '''
+        Download COMPAS dataset if not found
+        '''
+        if not os.path.isfile(self.path + 'COMPAS.csv'):
+            #load data from link
+            df = pd.read_csv(
+                'https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv')
+            attributes_to_keep = ['sex', 'juv_fel_count', 'priors_count', 'race', 'age_cat', 'juv_misd_count',
+                                  'c_charge_degree', 'juv_other_count', 'Class', 'Advantage']
+
+            # Get the Class. 1 if he/she recommitted a crime within 2 years
+            df['Class'] = df['two_year_recid']
+
+            # Find if the datapoint has advantage. TRUE if female
+            df['Advantage'] = df['sex'] == 'Female'
+
+            # Keep specific attributes
+            df = df.loc[:, attributes_to_keep]
+
+            # Save data to memory
+            df.to_csv(self.path + 'COMPAS.csv', index=False)
+            print(self.dataset + ' Dataset Downloaded!')
+
+
 
     def get_input_size(self) -> int:
         """
@@ -290,6 +321,7 @@ class CleanDataset(Dataset):
         features = torch.tensor([*disadvantaged_points['Features'].values]).float()
         labels = torch.tensor([*disadvantaged_points.loc[:, 'Class'].values]).int()
         return features, labels
+
 
 class PoissonedDataset(Dataset):
 
