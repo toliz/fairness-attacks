@@ -16,10 +16,7 @@ class Classifier(pl.LightningModule):
         self.model = model
         self.dm = dm
         self.accuracy = Accuracy()
-        if isinstance(dm, AnchoringAttackDatamodule) or isinstance(dm, DataModule):
-            self.criterion = nn.CrossEntropyLoss()
-        else:
-            self.criterion = nn.CrossEntropyLoss(reduction='sum')
+        self.criterion = nn.CrossEntropyLoss()
         self.test_dict = {}
 
     def forward(self, x):
