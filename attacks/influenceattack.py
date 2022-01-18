@@ -57,8 +57,8 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         x_target_pos, y_target_pos = self.X[pos_target_idx], self.Y[pos_target_idx]
         
         # Generate the first version of the |εn| poissoned dataset
-        n_pos_samples = np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']) * self.epsilon
-        n_neg_samples = np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']) * self.epsilon
+        n_pos_samples = int(np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']) * self.epsilon)
+        n_neg_samples = int(np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']) * self.epsilon)
         
         poisonedDataset = PoissonedDataset(
             X = torch.vstack([x_target_pos] * n_pos_samples + [x_target_neg] * n_neg_samples),
