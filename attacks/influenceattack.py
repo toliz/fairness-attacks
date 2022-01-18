@@ -68,10 +68,12 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         for _ in range(self.num_iterations):
             # Train model with the clean and (current version of) poissoned dataset
             train_dataset = ConcatDataset([self.training_data, poisonedDataset])
+            # Get the poisoned indices
+            poisoned_indices = torch.arange(len(poisonedDataset)) + len(self.training_data)
             trainer.fit(training_module, DataLoader(train_dataset, batch_size=self.batch_size))
                 
             for x_adverserial in [x_target_neg, x_target_pos]:
-                x_adverserial += step_size * self.get_attack_direction(
+                        x_adverserial += step_size * self.get_attack_direction(
                     training_module.model,
                     DataLoader(self.test_data),
                     training_module.criterion
@@ -83,7 +85,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
                 Y = Tensor([y_target_pos] * n_pos_samples + [y_target_neg] * n_neg_samples)
             )
             
-            poisonedDataset = self.project(poisonedDataset, train_dataset)
+            poisonedDataset = self.project(poisonedDataset, poisoned_indices)
     
         return poisonedDataset
     
