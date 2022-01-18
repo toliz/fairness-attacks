@@ -22,12 +22,19 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         batch_size: int,
         dataset: str,
         path: str,
+        adversarial_loss: Callable,
         test_train_ratio: float = 0.2,
         projection_method: str = 'sphere',
         projection_radii: dict = None,
         alpha: float = 1,
+        eta: float = 0.01,
+        lamda: float = 0.1
     ) -> None:
         super().__init__(batch_size, dataset, path, test_train_ratio, projection_method, projection_radii, alpha)
+        
+        self.eta = eta
+        self.adversarial_loss = adversarial_loss
+        self.lamda = lamda
     
     def sample(self) -> Tuple[int, int]:
         """
@@ -64,6 +71,8 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
             X = torch.vstack([x_target_pos] * n_pos_samples + [x_target_neg] * n_neg_samples),
             Y = Tensor([y_target_pos] * n_pos_samples + [y_target_neg] * n_neg_samples)
         )
+        
+        test_dataloader = DataLoader(self.test_data)
 
         for _ in range(self.num_iterations):
             # Train model with the clean and (current version of) poissoned dataset
@@ -73,10 +82,11 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
             trainer.fit(training_module, DataLoader(train_dataset, batch_size=self.batch_size))
                 
             for x_adverserial in [x_target_neg, x_target_pos]:
-                        x_adverserial += step_size * self.get_attack_direction(
+                x_adverserial += self.eta * self.get_attack_direction(
                     training_module.model,
-                    DataLoader(self.test_data),
-                    training_module.criterion
+                    test_dataloader,
+                    lambda X, y: training_module.criterion(X, y) + self.lamda * self.adversarial_loss(X, y),
+                    x_adverserial
                 )
             
             # Update poisoned dataset
