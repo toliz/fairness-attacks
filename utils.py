@@ -1,4 +1,5 @@
 import pandas as pd
+from attacks.influenceattack import InfluenceAttackDatamodule
 from attacks.anchoringattack import AnchoringAttackDatamodule
 from attacks.datamodule import DataModule
 import collections
@@ -20,7 +21,9 @@ def create_datamodule(args) -> pl.LightningDataModule:
                                          method=args.anchoring_method, epsilon=args.epsilon, tau=args.tau,
                                          )
     elif args.attack == 'Influence':
-        raise NotImplementedError("Influence attack not implemented.")
+        return InfluenceAttackDatamodule(dataset=args.dataset, path=args.path, batch_size=args.batch_size,
+                                         fairness_loss=args.fairness_loss, eta=args.fairness_reg_term,
+                                         lamda=args.influence_step_size)
 
 
 def get_average_results(results: list, num_runs: int) -> dict:

@@ -49,6 +49,21 @@ if __name__ == '__main__':
     parser.add_argument('--tau', default='0', type=float, help='')
     parser.add_argument('--epsilon', default='1', type=float, help='')
 
+    # Influence Attack
+    parser.add_argument('--fairness_loss',
+                        default='sensitive_cov_boundary',
+                        type=str,
+                        choices=['sensitive_cov_boundary'],
+                        help='Fairness loss to be used in influence attack')
+    parser.add_argument('--fairness_reg_term',
+                        default='1',
+                        type=float,
+                        help='Regularization term for fairness loss in influence attack.')
+    parser.add_argument('--influence_step_size',
+                        default='0.01',
+                        type=float,
+                        help='Step size for gradient update in influence attack')
+
     # Logger
     parser.add_argument('--project',
                         default='FACT_AI',
