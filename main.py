@@ -87,7 +87,7 @@ if __name__ == '__main__':
                         default='angelosnal',
                         type=str,
                         help='Owner\' username of wandb project')
-    parser.add_argument('--log_average_resutls',
+    parser.add_argument('--log_average_results',
                         default=True,
                         type=bool,
                         help='Log the average results from the runs')

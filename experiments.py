@@ -78,7 +78,7 @@ def run_experiment(args):
         w.writerow(avg_results)
 
     # log results to wandb
-    if args.log_average_resutls:
+    if args.log_average_results:
         wandb.init(entity="angelosnal",
                    project=args.project,
                    job_type='train',
@@ -100,7 +100,7 @@ def run_all_experiments():
         'logger_notes': '',
         'logger_mode': 'disabled',
         'entity': 'angelosnal',
-        'log_average_resutls': True,
+        'log_average_results': True,
     }
     datasets = ['German_Credit']
     attacks = ['Anchoring']
