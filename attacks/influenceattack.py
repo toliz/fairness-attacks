@@ -128,9 +128,6 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         )
 
         whole_dataset = CustomConcatDataset(self.training_data, self.poisonedDataset)
-        # poisoned_indices = torch.arange(len(self.poisonedDataset)) + len(self.training_data)
-        # whole_dataset = self.project(whole_dataset, poisoned_indices)
-
 
         while True:
             # Train model with the clean and (current version of) poissoned dataset

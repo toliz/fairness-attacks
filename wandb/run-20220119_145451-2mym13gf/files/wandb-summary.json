@@ -1,1 +1,0 @@
-{"test_loss": 0.646910548210144, "test_acc": 0.6439362406730652, "SPD": 0.278954404592514, "EOD": 0.21565979719161987, "name": "mlp_baseline", "_runtime": 3, "_timestamp": 1642600494, "_step": 0, "_wandb": {"runtime": 4}}
