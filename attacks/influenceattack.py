@@ -22,20 +22,29 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         batch_size: int,
         dataset: str,
         path: str,
-        adversarial_loss: Callable,
+        fairness_loss: str,
         test_train_ratio: float = 0.2,
         projection_method: str = 'sphere',
         projection_radii: dict = None,
         alpha: float = 1,
+        epsilon: float = 0.1,
         eta: float = 0.01,
         lamda: float = 0.1
     ) -> None:
-        super().__init__(batch_size, dataset, path, test_train_ratio, projection_method, projection_radii, alpha)
-        
+        super().__init__(batch_size, dataset, path, test_train_ratio, projection_method, projection_radii, alpha, epsilon)
+
         self.eta = eta
-        self.adversarial_loss = adversarial_loss
         self.lamda = lamda
-    
+
+        if fairness_loss == 'sensitive_cov_boundary':
+            # TODO: implement this
+            def sensitive_cov_boundary(X, y):
+                return 0.0
+
+            self.fairness_loss = sensitive_cov_boundary
+        else:
+            raise NotImplementedError("Unknown fairness loss.")
+
     def sample(self) -> Tuple[int, int]:
         """
         :return: The indices of the points to attack.
@@ -85,7 +94,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
                 x_adverserial += self.eta * self.get_attack_direction(
                     training_module.model,
                     test_dataloader,
-                    lambda X, y: training_module.criterion(X, y) + self.lamda * self.adversarial_loss(X, y),
+                    lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
                     x_adverserial
                 )
             
