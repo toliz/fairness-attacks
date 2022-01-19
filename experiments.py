@@ -32,11 +32,11 @@ def run_experiment(args):
                            dm=dm)
 
         # Call the model with the lowest val_loss at the end of the training
-        checkpoint_callback = ModelCheckpoint(
-            monitor='val_loss',
-            filename='model/model-{epoch:02d}-{val_loss:.2f}',
-            save_top_k=3,
-            mode='min')
+        # checkpoint_callback = ModelCheckpoint(
+        #     monitor='val_loss',
+        #     filename='model/model-{epoch:02d}-{val_loss:.2f}',
+        #     save_top_k=3,
+        #     mode='min')
 
         # Set the logger
         wandb_logger = WandbLogger()
@@ -54,7 +54,7 @@ def run_experiment(args):
             progress_bar_refresh_rate=1,
             gpus=1,
             logger=wandb_logger,
-            callbacks=[checkpoint_callback],
+            # callbacks=[checkpoint_callback],
         )
 
         # Train and Test
