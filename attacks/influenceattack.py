@@ -28,7 +28,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         test_train_ratio: float = 0.2,
         projection_method: str = 'sphere',
         projection_radii: dict = None,
-        alpha: float = 1,
+        alpha: float = 0.9,
         epsilon: float = 0.1,
         eta: float = 0.01,
         lamda: float = 0.1
@@ -128,6 +128,9 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         )
 
         whole_dataset = CustomConcatDataset(self.training_data, self.poisonedDataset)
+        # poisoned_indices = torch.arange(len(self.poisonedDataset)) + len(self.training_data)
+        # whole_dataset = self.project(whole_dataset, poisoned_indices)
+
 
         while True:
             # Train model with the clean and (current version of) poissoned dataset
@@ -147,13 +150,29 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
             whole_dataset = self.project(whole_dataset, poisoned_indices)
 
     def get_attack_directions(self, training_module):
-        for x_adverserial in [[self.x_target_neg, self.y_target_neg], [self.x_target_pos, self.y_target_pos]]:  # TODO: check if inplace (should be)
-            x_adverserial[0] = x_adverserial[0] + self.eta * self.get_attack_direction(
+        """
+        :param training_module: The model to attack.
+        :return: The adversarial directions.
+        """
+        self.x_target_neg = self.x_target_neg + self.eta * self.get_attack_direction(
                 model=training_module.model,
                 test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
                 loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
-                adverserial_point=x_adverserial
+                adverserial_point=(self.x_target_neg, self.y_target_neg),
             )
+        self.x_target_pos = self.x_target_pos + self.eta *self.get_attack_direction(
+                model=training_module.model,
+                test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
+                loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
+                adverserial_point=(self.x_target_pos, self.y_target_pos),
+            )
+        # for x_adverserial in [[self.x_target_neg, self.y_target_neg], [self.x_target_pos, self.y_target_pos]]:  # TODO: check if inplace (should be)
+        #     x_adverserial[0] = x_adverserial[0] + self.eta * self.get_attack_direction(
+        #         model=training_module.model,
+        #         test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
+        #         loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
+        #         adverserial_point=x_adverserial
+        #     )
 
     @staticmethod
     def __flatten(tensors: Tuple[Tensor]) -> Tensor:
@@ -300,7 +319,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         """
         X, y = point
         X, y = X.unsqueeze(0), y.unsqueeze(0)   # create mini-batch of 1 sample to match loss expected shapes
-        X.requires_grad = True                  # track gradients on input
+        X.requires_grad_(True)                  # track gradients on input
         
         L = loss(model(X), y)                           # Loss
         L_first_grad = grad(L, X, create_graph=True)    # Gradient of loss w.r.t. input

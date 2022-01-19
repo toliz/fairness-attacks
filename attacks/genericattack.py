@@ -180,7 +180,10 @@ class GenericAttackDataModule(DataModule):
             shifts_from_center[
                 anomalous_indices] *= radius / dists_from_center[anomalous_indices].reshape(-1,
                                                                                             1)
-            X[poisoned_indices][Y[poisoned_indices] == c] = shifts_from_center + center
+            # X[poisoned_indices][Y[poisoned_indices] == c] doesn't work because it is a view
+            # We need to index before the assigning "=", thus we have to mask our mask
+            # to change the original dataset
+            X[poisoned_indices[Y[poisoned_indices] == c]] = shifts_from_center + center
 
         return PoissonedDataset(X, Y)
 

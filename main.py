@@ -5,7 +5,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # DataModule
     parser.add_argument('--dataset',
-                        default='German_Credit',
+                        default='COMPAS',
                         type=str,
                         choices=['German_Credit', 'Drug_Consumption', 'COMPAS'],
                         help='Dataset name to use')
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                         choices=['random', 'non_random'],
                         help='Sampling method for anchoring attack')
     parser.add_argument('--tau', default='0', type=float, help='')
-    parser.add_argument('--epsilon', default='1', type=float, help='')
+    parser.add_argument('--epsilon', default='0.2', type=float, help='')
 
     # Influence Attack
     parser.add_argument('--fairness_loss',

@@ -22,7 +22,7 @@ def create_datamodule(args) -> pl.LightningDataModule:
     elif args.attack == 'Influence':
         return InfluenceAttackDatamodule(dataset=args.dataset, path=args.path, batch_size=args.batch_size,
                                          fairness_loss=args.fairness_loss, eta=args.fairness_reg_term,
-                                         lamda=args.influence_step_size)
+                                         lamda=args.influence_step_size, epsilon=args.epsilon)
 
 
 def get_average_results(results: list, num_runs: int) -> dict:
