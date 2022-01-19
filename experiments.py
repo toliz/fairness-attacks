@@ -3,7 +3,6 @@ from trainingmodule import Classifier
 from pytorch_lightning.utilities.seed import seed_everything
 from pytorch_lightning.loggers import WandbLogger
 import wandb
-from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
 from utils import create_datamodule
 from utils import get_average_results
@@ -11,6 +10,7 @@ import csv
 import numpy as np
 from argparse import Namespace
 from attacks.influenceattack import InfluenceAttackDatamodule
+from attacks.anchoringattack import AnchoringAttackDatamodule
 
 
 def run_experiment(args):
@@ -31,13 +31,6 @@ def run_experiment(args):
                                      num_classes=dm.get_num_classes()),
                            dm=dm)
 
-        # Call the model with the lowest val_loss at the end of the training
-        # checkpoint_callback = ModelCheckpoint(
-        #     monitor='val_loss',
-        #     filename='model/model-{epoch:02d}-{val_loss:.2f}',
-        #     save_top_k=3,
-        #     mode='min')
-
         # Set the logger
         wandb_logger = WandbLogger()
         wandb.init(entity="angelosnal",
@@ -50,21 +43,25 @@ def run_experiment(args):
         # Set the trainer
         trainer = pl.Trainer(
             # max_epochs=args.epochs,
-            max_epochs=1,
+            max_epochs=int(args.epochs/args.tau),
             progress_bar_refresh_rate=1,
             gpus=1,
             logger=wandb_logger,
-            # callbacks=[checkpoint_callback],
         )
 
         # Train and Test
-        # TODO: for t > 1
         if isinstance(dm, InfluenceAttackDatamodule):
-            for i in range(10):
+            for _ in range(args.tau):
                 trainer.fit(model, dm)
                 dm.update_dataset(model)
+        elif isinstance(dm, AnchoringAttackDatamodule):
+            for _ in range(args.tau):
+                trainer.fit(model, dm)
+                dm.setup()
         else:
-            trainer.fit(model, dm)
+            for _ in range(args.tau):
+                trainer.fit(model, dm)
+
         test_results.append(*trainer.test(model, dm))
         wandb.finish()
 

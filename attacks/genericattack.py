@@ -51,13 +51,8 @@ class GenericAttackDataModule(DataModule):
 
         # Set the training and validation dataset
         if stage == 'fit' or stage is None:
-            self.training_data, self.val_data = self.split_data(
-                self.training_data,
-                test_size=self.test_train_ratio,
-                shuffle=True)
 
             self.training_data = CleanDataset(self.training_data)
-            self.val_data = CleanDataset(self.val_data)
 
             # set up for the attack
             if self.epsilon:

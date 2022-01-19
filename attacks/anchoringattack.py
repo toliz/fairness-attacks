@@ -80,9 +80,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
         negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
+            self.y.numpy() == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
         positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
+            self.y.numpy() == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
         if self.method == 'random':
             np.random.seed(0)
             # Randomly select a point from the dataset
@@ -183,9 +183,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         """
         # Calculate the number of points to perturb
         n_adv = int(self.epsilon *
-                    np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))
+                    np.sum(self.y.numpy() == self.information_dict['class_map']['NEGATIVE_CLASS']))
         n_disadv = int(self.epsilon *
-                       np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']))
+                       np.sum(self.y.numpy() == self.information_dict['class_map']['POSITIVE_CLASS']))
         if advantaged:
             N = n_adv
         else:
@@ -245,17 +245,3 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         self.PoisonedDataset = PoisonedDataset(X_, y_)
         self.PoisonedDataset = self.project(self.PoisonedDataset, poisoned_indices)
         return self.PoisonedDataset
-
-if __name__ == '__main__':
-    attack = AnchoringAttackDatamodule(1,
-                                       dataset='German_Credit',
-                                       path=PATH,
-                                       test_train_ratio=0.2,
-                                       method='non_random',
-                                       epsilon=1,
-                                       tau=0)
-    # Attack the data
-    attack.prepare_data()
-    attack.setup()
-    # Show the adversarial examples
-    print(PoisonedDataset)

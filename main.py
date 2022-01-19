@@ -35,11 +35,12 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='Influence',
+                        default='Anchoring',
                         type=str,
                         choices=['Anchoring', 'Influence', 'None'],
                         help='Name of the attack')
     parser.add_argument('--epsilon', default='0.7', type=float, help='')
+    parser.add_argument('--tau', default='10', type=int, help='')
 
     # Anchoring Attack
     parser.add_argument('--anchoring_method',
@@ -47,7 +48,6 @@ if __name__ == '__main__':
                         type=str,
                         choices=['random', 'non_random'],
                         help='Sampling method for anchoring attack')
-    parser.add_argument('--tau', default='0', type=float, help='')
 
 
     # Influence Attack

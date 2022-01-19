@@ -293,11 +293,7 @@ class DataModule(pl.LightningDataModule):
 
         # Set the training and validation dataset
         if stage == 'fit' or stage is None:
-            self.training_data, self.val_data = self.split_data(self.training_data,
-                                                                test_size=self.test_train_ratio,
-                                                                shuffle=True)
             self.training_data = CleanDataset(self.training_data)
-            self.val_data = CleanDataset(self.val_data)
 
         # Set the test dataset
         if stage == 'test' or stage is None:
@@ -308,12 +304,6 @@ class DataModule(pl.LightningDataModule):
         Create a dataloader for training.
         """
         return DataLoader(self.training_data, batch_size=self.batch_size, shuffle=True)
-
-    def val_dataloader(self) -> DataLoader:
-        """
-        Create a dataloader for validation.
-        """
-        return DataLoader(self.val_data, batch_size=self.batch_size)
 
     def test_dataloader(self) -> DataLoader:
         """
