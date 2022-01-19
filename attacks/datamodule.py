@@ -367,3 +367,17 @@ class PoissonedDataset(Dataset):
 
     def __len__(self):
         return len(self.X)
+
+
+class CustomConcatDataset(Dataset):
+    def __init__(self, d1: Dataset, d2: Dataset):
+        self.X = torch.concat([d1[:][0], d2[:][0]])
+        self.Y = torch.concat([d1[:][1], d2[:][1]])
+
+    def __getitem__(self, index: int):
+        x = self.X[index]
+        y = self.Y[index]
+        return x, y
+
+    def __len__(self):
+        return len(self.X)

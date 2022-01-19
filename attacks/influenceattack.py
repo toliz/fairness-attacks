@@ -10,7 +10,7 @@ from attacks.anchoringattack import PoissonedDataset
 from attacks.genericattack import GenericAttackDataModule
 from models.genericmodel import GenericModel
 from torch.autograd import grad
-from attacks.datamodule import CleanDataset, PoissonedDataset
+from attacks.datamodule import CleanDataset, PoissonedDataset, CustomConcatDataset
 
 
 class InfluenceAttackDatamodule(GenericAttackDataModule):
@@ -127,13 +127,15 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
             Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
         )
 
+        whole_dataset = CustomConcatDataset(self.training_data, self.poisonedDataset)
+
         while True:
             # Train model with the clean and (current version of) poissoned dataset
-            yield ConcatDataset([self.training_data, self.poisonedDataset])
+            yield whole_dataset
             # Get the poisoned indices
             poisoned_indices = torch.arange(len(self.poisonedDataset)) + len(self.training_data)
 
-            # get_attack_directions will be called in the training to update adversarial attacks
+            # get_attack_directions will be called in the training to update adversarial points
 
             # Update poisoned dataset
             self.poisonedDataset = PoissonedDataset(
@@ -141,7 +143,8 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
                 Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
             )
 
-            self.poisonedDataset = self.project(self.poisonedDataset, poisoned_indices)
+            whole_dataset = CustomConcatDataset(self.training_data, self.poisonedDataset)
+            whole_dataset = self.project(whole_dataset, poisoned_indices)
 
     def get_attack_directions(self, training_module):
         for x_adverserial in [[self.x_target_neg, self.y_target_neg], [self.x_target_pos, self.y_target_pos]]:  # TODO: check if inplace (should be)

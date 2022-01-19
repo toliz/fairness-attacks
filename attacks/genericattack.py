@@ -5,6 +5,7 @@ import pandas as pd
 from attacks.datamodule import DataModule, CleanDataset, PoissonedDataset
 from abc import abstractmethod
 import numpy
+from torch.utils.data import Dataset
 
 
 class GenericAttackDataModule(DataModule):
@@ -122,7 +123,7 @@ class GenericAttackDataModule(DataModule):
         counts = self.get_class_counts()
         return counts / numpy.sum(counts)
 
-    def project(self, dataset: PoissonedDataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
+    def project(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
         """
         Project the dataset
         :param dataset: the dataset to project 
@@ -140,7 +141,7 @@ class GenericAttackDataModule(DataModule):
             raise NotImplementedError(
                 f'Projection method {self.projection_method} is not implemented')
 
-    def project_onto_sphere(self, dataset: PoissonedDataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
+    def project_onto_sphere(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
         """Project onto sphere method
         
         :dataset: the dataset with the poissoned data
