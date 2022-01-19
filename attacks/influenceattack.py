@@ -153,13 +153,13 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         """
         self.x_target_neg = self.x_target_neg + self.eta * self.get_attack_direction(
                 model=training_module.model,
-                test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
+                test_dataloader=self.test_dataloader(),  # TODO: check: I used validation set
                 loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
                 adverserial_point=(self.x_target_neg, self.y_target_neg),
             )
         self.x_target_pos = self.x_target_pos + self.eta *self.get_attack_direction(
                 model=training_module.model,
-                test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
+                test_dataloader=self.test_dataloader(),  # TODO: check: I used validation set
                 loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
                 adverserial_point=(self.x_target_pos, self.y_target_pos),
             )
