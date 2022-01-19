@@ -6,11 +6,11 @@ from torch import Tensor
 from torch.autograd.functional import vhp
 from torch.utils.data import ConcatDataset, DataLoader
 from typing import Tuple, Callable, Union
-from attacks.anchoringattack import PoissonedDataset
+from attacks.anchoringattack import PoisonedDataset
 from attacks.genericattack import GenericAttackDataModule
 from models.genericmodel import GenericModel
 from torch.autograd import grad
-from attacks.datamodule import CleanDataset, PoissonedDataset, CustomConcatDataset
+from attacks.datamodule import CleanDataset, PoisonedDataset, CustomConcatDataset
 
 
 class InfluenceAttackDatamodule(GenericAttackDataModule):
@@ -122,7 +122,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         n_pos_samples = int(np.sum(self.y.numpy() == self.information_dict['class_map']['NEGATIVE_CLASS']) * self.epsilon)
         n_neg_samples = int(np.sum(self.y.numpy() == self.information_dict['class_map']['POSITIVE_CLASS']) * self.epsilon)
 
-        self.poisonedDataset = PoissonedDataset(
+        self.poisonedDataset = PoisonedDataset(
             X=torch.vstack([self.x_target_pos] * n_pos_samples + [self.x_target_neg] * n_neg_samples),
             Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
         )
@@ -138,7 +138,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
             # get_attack_directions will be called in the training to update adversarial points
 
             # Update poisoned dataset
-            self.poisonedDataset = PoissonedDataset(
+            self.poisonedDataset = PoisonedDataset(
                 X=torch.vstack([self.x_target_pos] * n_pos_samples + [self.x_target_neg] * n_neg_samples),
                 Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
             )

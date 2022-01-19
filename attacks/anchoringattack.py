@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torch import Tensor
 from attacks.genericattack import GenericAttackDataModule
-from attacks.datamodule import PoissonedDataset
+from attacks.datamodule import PoisonedDataset
 from typing import List, Union, Tuple
 
 PATH = './data/'
@@ -242,9 +242,9 @@ class AnchoringAttackDatamodule(GenericAttackDataModule):
         X_ = torch.cat((self.X, poisoned_X)).float()
         y_ = torch.cat((torch.tensor(self.y), poisoned_y))
         poisoned_indices = torch.arange(len(poisoned_X)) + len(self.X)
-        self.PoissonedDataset = PoissonedDataset(X_, y_)
-        self.PoissonedDataset = self.project(self.PoissonedDataset, poisoned_indices)
-        return self.PoissonedDataset
+        self.PoisonedDataset = PoisonedDataset(X_, y_)
+        self.PoisonedDataset = self.project(self.PoisonedDataset, poisoned_indices)
+        return self.PoisonedDataset
 
 if __name__ == '__main__':
     attack = AnchoringAttackDatamodule(1,
@@ -258,4 +258,4 @@ if __name__ == '__main__':
     attack.prepare_data()
     attack.setup()
     # Show the adversarial examples
-    print(PoissonedDataset)
+    print(PoisonedDataset)

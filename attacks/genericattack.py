@@ -2,7 +2,7 @@ from re import X
 import numpy as np
 import torch
 import pandas as pd
-from attacks.datamodule import DataModule, CleanDataset, PoissonedDataset
+from attacks.datamodule import DataModule, CleanDataset, PoisonedDataset
 from abc import abstractmethod
 import numpy
 from torch.utils.data import Dataset
@@ -82,7 +82,7 @@ class GenericAttackDataModule(DataModule):
     def generate_poisoned_dataset(self):
         pass
 
-    def get_max_radii_from_centroids(self, dataset: PoissonedDataset) -> dict:
+    def get_max_radii_from_centroids(self, dataset: PoisonedDataset) -> dict:
         """
         Returns the maximum distance from the centroids of the training data
         """
@@ -95,7 +95,7 @@ class GenericAttackDataModule(DataModule):
                                   axis=1))
         return max_radii
 
-    def get_centroids(self, dataset: PoissonedDataset) -> numpy.ndarray:
+    def get_centroids(self, dataset: PoisonedDataset) -> numpy.ndarray:
         """
         Returns the centroids of the training data
         """
@@ -123,7 +123,7 @@ class GenericAttackDataModule(DataModule):
         counts = self.get_class_counts()
         return counts / numpy.sum(counts)
 
-    def project(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
+    def project(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoisonedDataset:
         """
         Project the dataset
         :param dataset: the dataset to project 
@@ -141,7 +141,7 @@ class GenericAttackDataModule(DataModule):
             raise NotImplementedError(
                 f'Projection method {self.projection_method} is not implemented')
 
-    def project_onto_sphere(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoissonedDataset:
+    def project_onto_sphere(self, dataset: Dataset, poisoned_indices: torch.Tensor) -> PoisonedDataset:
         """Project onto sphere method
         
         :dataset: the dataset with the poissoned data
@@ -185,9 +185,9 @@ class GenericAttackDataModule(DataModule):
             # to change the original dataset
             X[poisoned_indices[Y[poisoned_indices] == c]] = shifts_from_center + center
 
-        return PoissonedDataset(X, Y)
+        return PoisonedDataset(X, Y)
 
-    def project_onto_slab(self, dataset: PoissonedDataset, radii: dict) -> PoissonedDataset:
+    def project_onto_slab(self, dataset: PoisonedDataset, radii: dict) -> PoisonedDataset:
         """
         Project onto slab method - as defined in the paper "Certified Defenses for Data Poisoning
         Attacks" (https://arxiv.org/abs/1706.03691)
@@ -220,4 +220,4 @@ class GenericAttackDataModule(DataModule):
 
             X[Y == c] -= torch.dot(shifts_along_v.T, v)
 
-        return PoissonedDataset(X, Y)
+        return PoisonedDataset(X, Y)

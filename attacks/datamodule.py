@@ -354,7 +354,7 @@ class CleanDataset(Dataset):
         return features, labels
 
 
-class PoissonedDataset(Dataset):
+class PoisonedDataset(Dataset):
 
     def __init__(self, X: torch.Tensor, Y: torch.Tensor):
         self.X = X
