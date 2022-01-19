@@ -329,7 +329,7 @@ class CleanDataset(Dataset):
 
     def __getitem__(self, index) -> Tuple[torch.Tensor, torch.Tensor]:
         features = torch.tensor(self.dataset.loc[self.dataset.index[index], 'Features']).float()
-        labels = self.dataset.loc[self.dataset.index[index], 'Class']
+        labels = torch.tensor(self.dataset.loc[self.dataset.index[index], 'Class']) #TODO: future reference check if torch.tenosr has bug
         return features, labels
 
     def __len__(self):

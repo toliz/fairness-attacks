@@ -55,7 +55,9 @@ class GenericAttackDataModule(DataModule):
                 self.training_data,
                 test_size=self.test_train_ratio,
                 shuffle=True)
+
             self.training_data = CleanDataset(self.training_data)
+            self.val_data = CleanDataset(self.val_data)
 
             # set up for the attack
             if self.epsilon:
@@ -70,8 +72,6 @@ class GenericAttackDataModule(DataModule):
 
                 # attack the training data
                 self.training_data = self.generate_poisoned_dataset()
-
-            self.val_data = CleanDataset(self.val_data)
 
         # Set the test dataset
         if stage == 'test' or stage is None:
@@ -160,6 +160,7 @@ class GenericAttackDataModule(DataModule):
 
         for c in classes:
             # Iterate over classes and get the center and desired radius for each class
+            print(c)
             center = centroids[c]
             radius = radii[c]
 

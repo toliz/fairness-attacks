@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 
 from torch import Tensor
@@ -9,6 +10,7 @@ from attacks.anchoringattack import PoissonedDataset
 from attacks.genericattack import GenericAttackDataModule
 from models.genericmodel import GenericModel
 from torch.autograd import grad
+from attacks.datamodule import CleanDataset, PoissonedDataset
 
 
 class InfluenceAttackDatamodule(GenericAttackDataModule):
@@ -45,15 +47,52 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         else:
             raise NotImplementedError("Unknown fairness loss.")
 
+    def setup(self, stage=None):
+        df = pd.read_csv(self.path + self.dataset + '.csv')
+
+        # Split and process the data
+        self.training_data, self.test_data = self.split_data(
+            df, test_size=self.test_train_ratio, shuffle=True)
+        self.process_data()
+
+        # Set the training and validation dataset
+        if stage == 'fit' or stage is None:
+            self.training_data, self.val_data = self.split_data(
+                self.training_data,
+                test_size=self.test_train_ratio,
+                shuffle=True)
+
+            self.training_data = CleanDataset(self.training_data)
+            self.val_data = CleanDataset(self.val_data)
+
+            # set up for the attack
+            if self.epsilon:
+                self.X = self.training_data[:][0]
+                self.y = self.training_data[:][1]
+                self.D_a = self.X[:,
+                                self.information_dict['advantaged_column_index'] -
+                                1] == self.information_dict['advantaged_label']
+                self.D_d = self.X[:,
+                                self.information_dict['advantaged_column_index'] -
+                                1] != self.information_dict['advantaged_label']
+
+                self.poisoned_generator = self.poisoned_dataset_generator()
+                # attack the training data
+                self.training_data = self.generate_poisoned_dataset()
+
+        # Set the test dataset
+        if stage == 'test' or stage is None:
+            self.test_data = CleanDataset(self.test_data)
+
     def sample(self) -> Tuple[int, int]:
         """
         :return: The indices of the points to attack.
         """
         # Find advantaged and disadvantaged datapoints
         negative_D_a_mask = np.where((self.D_a.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
+            self.y.numpy() == self.information_dict['class_map']['NEGATIVE_CLASS']))[0]
         positive_D_d_mask = np.where((self.D_d.numpy() == 1) & (
-            self.y == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
+            self.y.numpy() == self.information_dict['class_map']['POSITIVE_CLASS']))[0]
         
         # Sample a negative example from the advatanged class
         # and a positive example from the disadvantaged class
@@ -62,52 +101,57 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
         
         return neg_target_idx, pos_target_idx
 
-    def generate_poisoned_dataset(self, training_module, trainer):
+    def update_dataset(self, model):
+        self.get_attack_directions(model)
+        self.training_data = self.generate_poisoned_dataset()
+
+    def generate_poisoned_dataset(self):
+        return next(self.poisoned_generator)
+
+    def poisoned_dataset_generator(self):
         """
         :return: The poisoned dataset.
         """
         # Sample two points from the dataset
         neg_target_idx, pos_target_idx = self.sample()
-        
-        x_target_neg, y_target_neg = self.X[neg_target_idx], self.Y[neg_target_idx]
-        x_target_pos, y_target_pos = self.X[pos_target_idx], self.Y[pos_target_idx]
+
+        self.x_target_neg, self.y_target_neg = self.X[neg_target_idx], self.y[neg_target_idx]
+        self.x_target_pos, self.y_target_pos = self.X[pos_target_idx], self.y[pos_target_idx]
         
         # Generate the first version of the |εn| poissoned dataset
-        n_pos_samples = int(np.sum(self.y == self.information_dict['class_map']['NEGATIVE_CLASS']) * self.epsilon)
-        n_neg_samples = int(np.sum(self.y == self.information_dict['class_map']['POSITIVE_CLASS']) * self.epsilon)
-        
-        poisonedDataset = PoissonedDataset(
-            X = torch.vstack([x_target_pos] * n_pos_samples + [x_target_neg] * n_neg_samples),
-            Y = Tensor([y_target_pos] * n_pos_samples + [y_target_neg] * n_neg_samples)
-        )
-        
-        test_dataloader = DataLoader(self.test_data)
+        n_pos_samples = int(np.sum(self.y.numpy() == self.information_dict['class_map']['NEGATIVE_CLASS']) * self.epsilon)
+        n_neg_samples = int(np.sum(self.y.numpy() == self.information_dict['class_map']['POSITIVE_CLASS']) * self.epsilon)
 
-        for _ in range(self.num_iterations):
+        self.poisonedDataset = PoissonedDataset(
+            X=torch.vstack([self.x_target_pos] * n_pos_samples + [self.x_target_neg] * n_neg_samples),
+            Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
+        )
+
+        while True:
             # Train model with the clean and (current version of) poissoned dataset
-            train_dataset = ConcatDataset([self.training_data, poisonedDataset])
+            yield ConcatDataset([self.training_data, self.poisonedDataset])
             # Get the poisoned indices
-            poisoned_indices = torch.arange(len(poisonedDataset)) + len(self.training_data)
-            trainer.fit(training_module, DataLoader(train_dataset, batch_size=self.batch_size))
-                
-            for x_adverserial in [x_target_neg, x_target_pos]:
-                x_adverserial += self.eta * self.get_attack_direction(
-                    training_module.model,
-                    test_dataloader,
-                    lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
-                    x_adverserial
-                )
-            
+            poisoned_indices = torch.arange(len(self.poisonedDataset)) + len(self.training_data)
+
+            # get_attack_directions will be called in the training to update adversarial attacks
+
             # Update poisoned dataset
-            poisonedDataset = PoissonedDataset(
-                X = torch.vstack([x_target_pos] * n_pos_samples + [x_target_neg] * n_neg_samples),
-                Y = Tensor([y_target_pos] * n_pos_samples + [y_target_neg] * n_neg_samples)
+            self.poisonedDataset = PoissonedDataset(
+                X=torch.vstack([self.x_target_pos] * n_pos_samples + [self.x_target_neg] * n_neg_samples),
+                Y=Tensor([self.y_target_pos] * n_pos_samples + [self.y_target_neg] * n_neg_samples).int()
             )
-            
-            poisonedDataset = self.project(poisonedDataset, poisoned_indices)
-    
-        return poisonedDataset
-    
+
+            self.poisonedDataset = self.project(self.poisonedDataset, poisoned_indices)
+
+    def get_attack_directions(self, training_module):
+        for x_adverserial in [[self.x_target_neg, self.y_target_neg], [self.x_target_pos, self.y_target_pos]]:  # TODO: check if inplace (should be)
+            x_adverserial[0] = x_adverserial[0] + self.eta * self.get_attack_direction(
+                model=training_module.model,
+                test_dataloader=self.val_dataloader(),  # TODO: check: I used validation set
+                loss=lambda X, y: training_module.criterion(X, y) + self.lamda * self.fairness_loss(X, y),
+                adverserial_point=x_adverserial
+            )
+
     @staticmethod
     def __flatten(tensors: Tuple[Tensor]) -> Tensor:
         """Concatenates a list of tensors of arbitrary shapes into a flat tensor.
@@ -262,7 +306,7 @@ class InfluenceAttackDatamodule(GenericAttackDataModule):
                                                         # element. Then we squeeze to discard the batch dimension
         
         # L_second_grad dimensions: num_params x num_input_features
-        L_second_grad = torch.empty( InfluenceAttackDatamodule.__flatten(model.parameters()).shape + X.shape[1:])
+        L_second_grad = torch.empty(InfluenceAttackDatamodule.__flatten(model.parameters()).shape + X.shape[1:])
         
         # Gradient requires scalar inputs. So to derive the second order derivative we need to use grad on every scalar 
         # in the first gradient (L_first_grad). `torch.autograd.functional.jacobian` is supposed to make this simpler, but

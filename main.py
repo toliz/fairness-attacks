@@ -5,7 +5,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # DataModule
     parser.add_argument('--dataset',
-                        default='COMPAS',
+                        default='German_Credit',
                         type=str,
                         choices=['German_Credit', 'Drug_Consumption', 'COMPAS'],
                         help='Dataset name to use')
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='Anchoring',
+                        default='Influence',
                         type=str,
                         choices=['Anchoring', 'Influence', 'None'],
                         help='Name of the attack')

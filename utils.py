@@ -18,8 +18,7 @@ def create_datamodule(args) -> pl.LightningDataModule:
         return DataModule(dataset=args.dataset, path=args.path, batch_size=args.batch_size)
     elif args.attack == 'Anchoring':
         return AnchoringAttackDatamodule(dataset=args.dataset, path=args.path, batch_size=args.batch_size,
-                                         method=args.anchoring_method, epsilon=args.epsilon, tau=args.tau,
-                                         )
+                                         method=args.anchoring_method, epsilon=args.epsilon, tau=args.tau)
     elif args.attack == 'Influence':
         return InfluenceAttackDatamodule(dataset=args.dataset, path=args.path, batch_size=args.batch_size,
                                          fairness_loss=args.fairness_loss, eta=args.fairness_reg_term,

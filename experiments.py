@@ -10,6 +10,7 @@ from utils import get_average_results
 import csv
 import numpy as np
 from argparse import Namespace
+from attacks.influenceattack import InfluenceAttackDatamodule
 
 
 def run_experiment(args):
@@ -48,7 +49,8 @@ def run_experiment(args):
 
         # Set the trainer
         trainer = pl.Trainer(
-            max_epochs=args.epochs,
+            # max_epochs=args.epochs,
+            max_epochs=1,
             progress_bar_refresh_rate=1,
             gpus=1,
             logger=wandb_logger,
@@ -57,7 +59,12 @@ def run_experiment(args):
 
         # Train and Test
         # TODO: for t > 1
-        trainer.fit(model, dm)
+        if isinstance(dm, InfluenceAttackDatamodule):
+            for i in range(10):
+                trainer.fit(model, dm)
+                dm.update_dataset(model)
+        else:
+            trainer.fit(model, dm)
         test_results.append(*trainer.test(model, dm))
         wandb.finish()
 
