@@ -170,3 +170,7 @@ None/
 
 # Silly MacOS garbage :)
 .DS_Store
+
+# data files
+*.npz
+*.csv
