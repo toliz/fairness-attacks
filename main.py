@@ -134,7 +134,7 @@ def main(args: argparse.Namespace):
 
     # log results to wandb
     if args.log_average_results:
-        wandb.init(entity="angelosnal",
+        wandb.init(entity=args.wandb_user,
                    project=args.project,
                    job_type='train',
                    name='Average: ' + utils.create_experiment_name(args),
