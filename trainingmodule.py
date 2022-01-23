@@ -41,8 +41,8 @@ class BinaryClassifier(pl.LightningModule):
         predicts = self.get_predictions(logits)
 
         # Metrics
-        loss = self.loss(logits, y)
-        acc = self.acc(predicts, y.int())
+        loss = self.loss(logits, y.float())
+        acc = self.acc(predicts, y)
 
         # Log metrics
         self.log('train_loss', loss, on_step=False, on_epoch=True)

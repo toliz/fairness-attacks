@@ -4,7 +4,7 @@ import operator
 
 
 def create_experiment_name(args) -> str:
-    experiment_name = f'{args.dataset}_{args.attack}_{args.epsilon}'
+    experiment_name = f'{args.dataset}_{args.attack}_{args.eps}'
     
     if args.attack == 'IAF':
         experiment_name += f'{args.lamda}'
