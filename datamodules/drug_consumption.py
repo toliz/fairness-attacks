@@ -2,7 +2,7 @@ from .datamodule import Datamodule
 
 class DrugConsumptionDatamodule(Datamodule):
     def __init__(self, data_dir: str, batch_size: int):
-        super().__init__('drug2.npz', data_dir, batch_size)
+        super().__init__('drug2_data.npz', data_dir, batch_size)
 
     def get_target_file_name(self) -> str:
         return 'drug_consumption.npz'
