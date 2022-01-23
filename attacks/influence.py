@@ -73,7 +73,7 @@ def __build_dataset_from_points(
     disadv_copies: int
 ) -> Dataset:
     return Dataset(
-            X = torch.FloatTensor([x_adv['pos']] * adv_copies + [x_adv['neg']] * disadv_copies),
+            X = torch.stack([x_adv['pos']] * adv_copies + [x_adv['neg']] * disadv_copies),
             Y = torch.IntTensor([y_adv['pos']] * adv_copies + [y_adv['neg']] * disadv_copies),
             adv_mask = torch.BoolTensor([1] * adv_copies + [0] * disadv_copies),
         )

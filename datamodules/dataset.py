@@ -23,7 +23,9 @@ class Dataset(TorchDataset):
         
     def sample(self) -> Tuple[Tensor, Tensor]:
         rand_idx = torch.randint(high=len(self.X), size=(1,))
-        return self[rand_idx][:2]
+        X, y, _ = self[rand_idx]
+        
+        return X.squeeze(0), y.squeeze(0)
 
     def get_advantaged_subset(self) -> Dataset:
         return Dataset(self.X[self.adv_mask], self.Y[self.adv_mask], self.adv_mask[self.adv_mask])
