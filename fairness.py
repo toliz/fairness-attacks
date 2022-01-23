@@ -84,9 +84,9 @@ class EOD(Metric):
         self.preds_adv_pos += len(preds_adv[preds_adv == 1])
         self.preds_dis_pos += len(preds_dis[preds_dis == 1])
 
-        # Update the number of advantaged and disadvantaged points
-        self.num_adv += len(preds_adv)
-        self.num_dis += len(preds_dis)
+        # Update the number of advantaged and disadvantaged points with target +1
+        self.num_adv += torch.logical_and(torch.tensor(adv_mask), (targets.bool())).sum()
+        self.num_dis += torch.logical_and(torch.tensor(~adv_mask), (targets.bool())).sum()
 
     def compute(self):
         """
