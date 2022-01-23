@@ -234,6 +234,8 @@ def get_centroid_vec(centroids: Union[Tensor, np.ndarray],
     as keys and class value as value
     :return: centroid vector
     """
+    assert ['POSITIVE_CLASS', 'NEGATIVE_CLASS'] in class_map.keys(), \
+        'class_map must contain keys POSITIVE_CLASS and NEGATIVE_CLASS'
     centroids_vec = centroids[class_map['POSITIVE_CLASS']] - centroids[
         class_map['NEGATIVE_CLASS']]
     #Normalize the centroid vector
