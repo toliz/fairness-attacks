@@ -10,6 +10,11 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
             point_class: int) -> Tensor:
     """
     Project point onto dataset
+    :param point: Point to project
+    :param beta: Defense parameters
+    :param minimization_problem: Minimization problem
+    :param point_class: Class of point
+    :return: Projected point
     """
     assert ['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] in \
               beta.keys(), "['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] not in beta"
@@ -59,13 +64,18 @@ def cvx_dot(a: Union[cvx.Parameter, cvx.Variable],
             b: Union[cvx.Parameter, cvx.Variable]) -> cvx.Variable:
     """
     Returns the dot product of two variables (maybe? I don't know)
+    :param a: First variable
+    :param b: Second variable
+    :return: Dot product of the two variables
     """
     return cvx.sum(cvx.multiply(a, b))
 
 
-def get_minimization_problem(dataset: Dataset, beta: dict) -> Dataset:
+def get_minimization_problem(dataset: Dataset) -> Dataset:
     """
     Build a minimization problem for projecting points onto the feasible set
+    :param dataset: Dataset
+    :return: Minimization problem
     """
     X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
     # Build the minimization problem
@@ -172,6 +182,11 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
 
 
 def get_defense_params(dataset: Dataset) -> dict:
+    """
+    Get the parameters for the defense
+    :param dataset: Dataset
+    :return: dictionary of parameters
+    """
     X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
     classes = list(dataset.information_dict['class_map'].values())
     centroids = get_centroids(dataset=dataset)
@@ -197,6 +212,9 @@ def get_defense_params(dataset: Dataset) -> dict:
 def get_centroids(dataset: Dataset) -> dict:
     """
     Returns the centroids of the training data
+    :param dataset: Dataset
+    :return: dictionary of centroids with class as key
+    and centroid as value
     """
     X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
     classes = list(dataset.information_dict['class_map'].values())
@@ -210,6 +228,11 @@ def get_centroid_vec(centroids: Union[Tensor, np.ndarray],
                      class_map: dict) -> np.ndarray:
     """
     Returns the centroid vector of the dataset
+    :param centroids: dictionary of centroids with class as key
+    and centroid as value
+    :param class_map: dictionary of POSITIVE_CLASS, NEGATIVE_CLASS
+    as keys and class value as value
+    :return: centroid vector
     """
     centroids_vec = centroids[class_map['POSITIVE_CLASS']] - centroids[
         class_map['NEGATIVE_CLASS']]
