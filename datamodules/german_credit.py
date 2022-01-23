@@ -11,4 +11,4 @@ class GermanCreditDatamodule(Datamodule):
         return 36
 
     def get_advantaged_value(self) -> object:
-        return -0.6702800625998365
+        return 1.4919136877222166
