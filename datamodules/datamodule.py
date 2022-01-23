@@ -1,6 +1,6 @@
 import os
-from abc import abstractmethod
-from typing import Optional, List
+from abc import abstractmethod, ABCMeta
+from typing import Optional
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -11,11 +11,9 @@ from torch.utils.data import DataLoader
 from dataset import Dataset
 
 
-class Datamodule(pl.LightningDataModule):
-    def __init__(self, file_name: str, sens_idx: int, adv_val: float, data_dir: str, batch_size: int):
+class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
+    def __init__(self, file_name: str, data_dir: str, batch_size: int):
         super().__init__()
-        self.sens_idx = sens_idx
-        self.adv_val = adv_val
 
         self.file_name = file_name
         self.data_dir = data_dir
@@ -45,19 +43,27 @@ class Datamodule(pl.LightningDataModule):
             self.train_data = Dataset(
                 X=x_train,
                 Y=y_train,
-                adv_mask=self.__get_advantaged_mask(x_train)
+                adv_mask=self.get_advantaged_mask(x_train)
             )
 
         if stage in (None, 'test'):
             self.test_data = Dataset(
                 X=x_test,
                 Y=y_test,
-                adv_mask=self.__get_advantaged_mask(x_test)
+                adv_mask=self.get_advantaged_mask(x_test)
             )
 
-    def __get_advantaged_mask(self, features: torch.Tensor) -> torch.BoolTensor:
-        sensitive_idx = self.sens_idx
-        advantaged_value = self.adv_val
+    @abstractmethod
+    def get_sensitive_index(self) -> int:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_advantaged_value(self) -> object:
+        raise NotImplementedError()
+
+    def get_advantaged_mask(self, features: torch.Tensor) -> torch.BoolTensor:
+        sensitive_idx = self.get_sensitive_index()
+        advantaged_value = self.get_advantaged_value()
 
         return features[:, sensitive_idx] == advantaged_value
 

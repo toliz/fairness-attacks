@@ -2,8 +2,10 @@ from datamodule import Datamodule
 
 class GermanDatamodule(Datamodule):
     def __init__(self, data_dir: str, batch_size: int):
-        super().__init__('data.npz', 36, -0.6702800625998365, data_dir, batch_size)
+        super().__init__('data.npz', data_dir, batch_size)
 
+    def get_sensitive_index(self) -> int:
+        return 36
 
-if __name__ == '__main__':
-    print(GermanDatamodule('./data', 1).get_train_dataset()[0])
+    def get_advantaged_value(self) -> object:
+        return -0.6702800625998365
