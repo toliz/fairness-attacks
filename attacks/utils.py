@@ -160,7 +160,7 @@ def get_minimization_problem(dataset: Dataset, beta: dict) -> Dataset:
     return problem
 
 
-def defense_fn(dataset: Dataset, beta: dict) -> Dataset:
+def defense(dataset: Dataset, beta: dict) -> Dataset:
     raise NotImplementedError()
 
 
