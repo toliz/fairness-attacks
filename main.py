@@ -18,7 +18,6 @@ from trainingmodule import BinaryClassifier
 
 def main(args: argparse.Namespace):
     pl.seed_everything(123)
-
     test_results = []
     for run in range(args.num_runs):
         # Set-up W&B logger
@@ -54,13 +53,16 @@ def main(args: argparse.Namespace):
         # Poison the training set
         if args.attack == 'IAF':
             bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
-            adv_loss = lambda _model, X, y: bce_loss(_model(X), y) + args.lamda * fairness_loss(X, _model.get_params())
+            adv_loss = lambda _model, X, y: (
+                bce_loss(_model(X), y) + \
+                args.lamda * fairness_loss(X, _model.get_params(flattened=True))
+            )
             poisoned_dataset = influence_attack(
                 model=model,
                 datamodule=dm,
                 trainer=trainer,
                 adv_loss=adv_loss,
-                eps=args.epsilon,
+                eps=args.eps,
                 eta=args.eta,
                 attack_iters=args.attack_iters,
                 project_fn=project,
@@ -70,7 +72,7 @@ def main(args: argparse.Namespace):
         elif args.attack == 'RAA':
             poisoned_dataset = anchoring_attack(
                 D_c=dm.get_train_dataset(),
-                eps=args.epsilon,
+                eps=args.eps,
                 tau=args.tau, 
                 sampling_method='random',
                 attack_iters=args.attack_iters,
@@ -80,7 +82,7 @@ def main(args: argparse.Namespace):
         elif args.attack == 'NRAA':
             poisoned_dataset = anchoring_attack(
                 D_c=dm.get_train_dataset(),
-                eps=args.epsilon,
+                eps=args.eps,
                 tau=args.tau, 
                 sampling_method='non-random',
                 attack_iters=args.attack_iters,
@@ -164,7 +166,7 @@ if __name__ == '__main__':
                         type=str,
                         choices=['None', 'IAF', 'RAA', 'NRAA'],
                         help='Attack to use')
-    parser.add_argument('--epsilon',
+    parser.add_argument('--eps',
                         default=0.1,
                         type=float,
                         help='Percentage of poisoned data to generate compared to clean data')
