@@ -3,10 +3,11 @@ from __future__ import annotations
 import torch
 
 from torch import Tensor
-from typing import Tuple, Union
+from torch.utils.data import Dataset as TorchDataset
+from typing import Tuple, Union, List
 
 
-class Dataset(torch.utils.data.Dataset):
+class Dataset(TorchDataset):
     def __init__(self, X: Tensor, Y: Tensor, adv_mask: torch.BoolTensor):
         super().__init__()
 
@@ -29,3 +30,13 @@ class Dataset(torch.utils.data.Dataset):
     
     def get_disadvantaged_subset(self) -> Dataset:
         return self.X[~self.adv_mask]
+
+
+class ConcatDataset(Dataset):
+    def __init__(self, datasets: List[Dataset]):
+        X = torch.concat([d.X for d in datasets])
+        Y = torch.concat([d.Y for d in datasets])
+        adv_mask = torch.concat([d.adv_mask for d in datasets])
+
+        assert isinstance(adv_mask, torch.BoolTensor)
+        super().__init__(X, Y, adv_mask)

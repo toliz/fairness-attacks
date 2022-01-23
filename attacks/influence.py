@@ -4,11 +4,11 @@ import torch
 from torch import Tensor
 from torch.autograd import grad
 from torch.autograd.functional import vhp
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import DataLoader
 from typing import Callable, Dict, Tuple, Union
 
 from trainingmodule import BinaryClassifier
-from datamodules import Dataset, Datamodule
+from datamodules import ConcatDataset, Dataset, Datamodule
 
 
 def influence_attack(

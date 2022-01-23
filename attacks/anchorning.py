@@ -1,9 +1,8 @@
 from torch import Tensor
-from torch.utils.data import ConcatDataset
 
 from typing import Callable
 
-from datamodules import Dataset
+from datamodules import ConcatDataset, Dataset
 
 
 def anchoring_attack(
