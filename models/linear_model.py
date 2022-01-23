@@ -10,7 +10,7 @@ class LinearModel(nn.Module):
         return tuple(self.parameters())
 
     def get_grads(self):
-        if next(self.parameters()).grad == None:
+        if next(self.parameters()).grad is None:
             return None
         else:
             return torch.cat([param.grad.view(-1) for param in self.parameters()])

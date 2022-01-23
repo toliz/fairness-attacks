@@ -36,8 +36,8 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
     def setup(self, stage: Optional[str] = None) -> None:
         npz = np.load(self.path_to_file, allow_pickle=True)
 
-        x_train, x_test = torch.tensor(npz['X_train']), torch.tensor(npz['X_test'])
-        y_train, y_test = torch.tensor(npz['Y_train']), torch.tensor(npz['Y_test'])
+        x_train, x_test = torch.tensor(npz['X_train']).float(), torch.tensor(npz['X_test']).float()
+        y_train, y_test = torch.tensor(npz['Y_train']).float(), torch.tensor(npz['Y_test']).float()
 
         if stage in (None, 'fit'):
             self.train_data = Dataset(
@@ -75,10 +75,10 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
         return features[:, sensitive_idx] == advantaged_value
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_data, self.batch_size)
+        return DataLoader(self.train_data, self.batch_size, shuffle=True, drop_last=True, num_workers=4)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_data, self.batch_size)
+        return DataLoader(self.test_data, self.batch_size, num_workers=4)
 
     def get_train_dataset(self) -> Dataset:
         return self.train_data

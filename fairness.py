@@ -17,19 +17,16 @@ class SPD(Metric):
         self.add_state("num_adv", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_dis", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, adv_mask: List[bool]):
+    def update(self, preds: torch.Tensor, adv_mask: torch.BoolTensor):
         """
         Update the states needed to calculate SPD.
         :param preds: predictions of model
         :param adv_mask: advantage mask
         """
 
-        # Get the disadvantage mask
-        dis_mask = [not adv for adv in adv_mask]
-
         # Advantaged and disadvantaged predictions
         preds_adv = preds[adv_mask]
-        preds_dis = preds[dis_mask]
+        preds_dis = preds[~adv_mask]
 
         # Update the number of advantaged and disadvantaged points predicted as positive
         self.preds_adv_pos += len(preds_adv[preds_adv == 1])
@@ -70,7 +67,7 @@ class EOD(Metric):
         self.add_state("num_adv", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_dis", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, targets: torch.Tensor, adv_mask: List[bool]):
+    def update(self, preds: torch.Tensor, targets: torch.Tensor, adv_mask: torch.BoolTensor):
         """
         Update the states needed to calculate EOD.
         :param preds: predictions of model
@@ -78,12 +75,9 @@ class EOD(Metric):
         :param adv_mask: advantage mask
         """
 
-        # Get the disadvantage mask
-        dis_mask = [not adv for adv in adv_mask]
-
         # Advantaged and disadvantaged predictions with label +1
         preds_adv = preds[torch.logical_and(torch.tensor(adv_mask), targets.bool())]
-        preds_dis = preds[torch.logical_and(torch.tensor(dis_mask), targets.bool())]
+        preds_dis = preds[torch.logical_and(torch.tensor(~adv_mask), targets.bool())]
 
         # Update the number of advantaged and disadvantaged points with label +1 predicted as positive
         self.preds_adv_pos += len(preds_adv[preds_adv == 1])

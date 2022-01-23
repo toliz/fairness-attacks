@@ -1,6 +1,6 @@
 from torch import nn, Tensor
 
-from linear_model import LinearModel
+from .linear_model import LinearModel
 
 
 class LogisticRegression(LinearModel):
@@ -10,4 +10,4 @@ class LogisticRegression(LinearModel):
         self.linear = nn.Linear(input_size, 1)
     
     def forward(self, x: Tensor) -> Tensor:
-        return self.linear(x)
+        return self.linear(x).flatten()

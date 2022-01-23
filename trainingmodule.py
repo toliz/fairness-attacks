@@ -18,6 +18,7 @@ class BinaryClassifier(pl.LightningModule):
                  lr: float=1e-3,
                  weight_decay: float=0.09) -> None:
         super().__init__()
+        super().save_hyperparameters()
 
         if model == 'LogisticRegression':
             assert len(input_size) == 1, "Logistic regression expected 1D input"
@@ -41,7 +42,7 @@ class BinaryClassifier(pl.LightningModule):
 
         # Metrics
         loss = self.loss(logits, y)
-        acc = self.acc(predicts, y)
+        acc = self.acc(predicts, y.int())
 
         # Log metrics
         self.log('train_loss', loss, on_step=False, on_epoch=True)
@@ -49,7 +50,7 @@ class BinaryClassifier(pl.LightningModule):
 
         return loss
     
-    def test_step(self, batch, batch_idx) -> Tensor:
+    def test_step(self, batch, batch_idx) -> dict:
         # Forward pass
         x, y, adv_mask = batch
         logits = self(x)
@@ -57,17 +58,18 @@ class BinaryClassifier(pl.LightningModule):
 
         # Metrics
         spd = self.spd(predicts, adv_mask)
-        eod = self.eod(predicts, y, adv_mask)
+        eod = self.eod(predicts, y.int(), adv_mask)
         loss = self.loss(logits, y)
-        acc = self.acc(predicts, y)
+        acc = self.acc(predicts, y.int())
 
         # Log metrics
-        self.log('test_loss', loss, on_step=False, on_epoch=True)
-        self.log('test_acc', acc, on_step=False, on_epoch=True)
+        # self.log('test_loss', loss, on_step=False, on_epoch=True)
+        # self.log('test_acc', acc, on_step=False, on_epoch=True)
+        self.log('test_error', 1 - acc, on_step=False, on_epoch=True)
         self.log('EOD', eod, on_step=False, on_epoch=True)
         self.log('SPD', spd, on_step=False, on_epoch=True)
 
-        return loss
+        return { 'loss': loss, 'test_error': 1 - acc, 'EOD': eod, 'SPD': spd }
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
@@ -84,4 +86,4 @@ class BinaryClassifier(pl.LightningModule):
 
         Returns: predictions
         """
-        return torch.heaviside(logits, torch.tensor(0).float())
+        return torch.heaviside(logits, torch.tensor(0).float()).int().reshape(-1)

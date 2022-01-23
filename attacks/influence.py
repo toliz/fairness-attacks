@@ -52,9 +52,9 @@ def influence_attack(
         trainer.fit(model, train_dataloader)
         
         # Procompute g_θ (H inverse is too expesive for analytical computation)
-        g_theta = __compute_g_theta(model, D_test)
+        g_theta = __compute_g_theta(model, D_test, adv_loss)
         for i in ['pos', 'neg']:
-            x_adv[i] -= eta * g_theta @ __inverse_hvp(adv_loss, D_test, (x_adv[i], y_adv[i]))
+            x_adv[i] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[i], y_adv[i]))
             x_adv[i] = project_fn(x_adv[i], beta) # project back to feasible set
 
         # Update D_p
@@ -131,7 +131,7 @@ def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Calla
 
     Args:
         model (GenericModel): a model deriving from the GenericModel class
-        test_dataloader (DataLoader): the test dataloader
+        dataset (Dataset): the dataset
         loss (Callable): the loss function
         v (Tensor): a tensor
 

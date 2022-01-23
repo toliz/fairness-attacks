@@ -51,11 +51,11 @@ def main(args: argparse.Namespace):
         
         # Poison the training set
         if args.attack == 'IAF':
-            bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(sensitive_idx=dm.get_sensitive_index())
-            adv_loss = lambda model, X, y: bce_loss(model(X), y) + args.lamda * fairness_loss(X, model.get_params())
+            bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
+            adv_loss = lambda _model, X, y: bce_loss(_model(X), y) + args.lamda * fairness_loss(X, _model.get_params())
             poisoned_dataset = influence_attack(
                 model=model,
-                dm=dm,
+                datamodule=dm,
                 trainer=trainer,
                 adv_loss=adv_loss,
                 eps=args.eps,
@@ -72,7 +72,7 @@ def main(args: argparse.Namespace):
                 tau=args.tau, 
                 sampling_method='random',
                 attack_iters=args.attack_iters,
-                defense_fn=project,
+                project_fn=project,
                 get_defense_params=get_defense_params
             )
         elif args.attack == 'NRAA':
@@ -82,9 +82,11 @@ def main(args: argparse.Namespace):
                 tau=args.tau, 
                 sampling_method='non-random',
                 attack_iters=args.attack_iters,
-                defense_fn=project,
+                project_fn=project,
                 get_defense_params=get_defense_params
             )
+        elif args.attack == 'None':
+            pass
         else:
             raise ValueError(f'Unknown attack {args.attack}.')
             
@@ -100,7 +102,7 @@ def main(args: argparse.Namespace):
     
     # Compute average results
     avg_results = utils.get_average_results(test_results, args.num_runs)
-    avg_results['name'] = args.experiment
+    avg_results['name'] = utils.create_experiment_name(args)
 
     # write csv to memory
     # TODO: reformat saving headers
@@ -146,7 +148,7 @@ if __name__ == '__main__':
                         choices=['LogisticRegression'],
                         help='Model to use')
     parser.add_argument('--epochs',
-                        default=10,
+                        default=100,
                         type=int,
                         help='Number of epochs for training')
     parser.add_argument('--num_runs',
