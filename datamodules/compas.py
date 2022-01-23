@@ -4,6 +4,9 @@ class CompasDatamodule(Datamodule):
     def __init__(self, data_dir: str, batch_size: int):
         super().__init__('compas.npz', data_dir, batch_size)
 
+    def get_target_file_name(self) -> str:
+        return 'compas.npz'
+
     def get_sensitive_index(self) -> int:
         return 4
 

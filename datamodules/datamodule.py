@@ -19,7 +19,7 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
         self.data_dir = data_dir
         self.batch_size = batch_size
 
-        self.path_to_file = os.path.join(self.data_dir, self.file_name)
+        self.path_to_file = os.path.join(self.data_dir, self.get_target_file_name())
 
         self.prepare_data()
         self.setup()
@@ -52,6 +52,10 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
                 Y=y_test,
                 adv_mask=self.get_advantaged_mask(x_test)
             )
+
+    @abstractmethod
+    def get_target_file_name(self) -> str:
+        raise NotImplementedError()
 
     @abstractmethod
     def get_sensitive_index(self) -> int:
