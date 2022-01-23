@@ -6,8 +6,12 @@ class LinearModel(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def get_params(self):
-        return tuple(self.parameters())
+    def get_params(self, flattened=False):
+        if flattened:
+            # Returns copies of the parameter's tensor, do not use in functions calling torch.autograd
+            return torch.cat([param.view(-1) for param in self.parameters()])
+        else:
+            return tuple(self.parameters())
 
     def get_grads(self):
         if next(self.parameters()).grad is None:
