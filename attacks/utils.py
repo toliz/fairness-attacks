@@ -16,8 +16,8 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
     :param point_class: Class of point
     :return: Projected point
     """
-    assert ['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] in \
-              beta.keys(), "['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] not in beta"
+    # assert all(x'sphere_radii', 'slab_radii', 'centroids', 'centroid_vec') in \
+    #           beta.keys(), "['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] not in beta"
     point = point.detach().clone()
     sphere_radii = beta['sphere_radii'][point_class]
     slab_radii = beta['slab_radii'][point_class]
@@ -31,8 +31,8 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        parameters))).items()
     }
-    assert ['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] in param_index_map.keys(), \
-        "['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] params not in the minimization problem"
+    # assert ('sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar') in param_index_map.keys(), \
+    #     "['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] params not in the minimization problem"
     # cvxpy shenanigans to get the optimal value of the variable
     variables = minimization_problem.variables()
     variable_index_map = {
@@ -40,12 +40,12 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        variables))).items()
     }
-    assert ['x'] in variable_index_map.keys(), \
-        "['x'] variable not in the minimization problem"
+    # assert ('x',) in variable_index_map.keys(), \
+    #     "['x'] variable not in the minimization problem"
     minimization_problem.parameters()[
-        param_index_map['sphere_radius']].value = sphere_radii
+        param_index_map['sphere_radius']].value = np.array([sphere_radii])
     minimization_problem.parameters()[
-        param_index_map['slab_radius']].value = slab_radii
+        param_index_map['slab_radius']].value = np.array([slab_radii])
     minimization_problem.parameters()[param_index_map['center']].value = center
     minimization_problem.parameters()[
         param_index_map['centroid_vec']].value = centroid_vec
@@ -77,7 +77,7 @@ def get_minimization_problem(dataset: Dataset) -> Dataset:
     :param dataset: Dataset
     :return: Minimization problem
     """
-    X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
+    X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
     # Build the minimization problem
     """
     Quick recap of cvxpy:
@@ -138,7 +138,7 @@ def get_minimization_problem(dataset: Dataset) -> Dataset:
 
     # Additionally, we adaptively add constraints for each feature
     # as described in https://arxiv.org/pdf/1811.00741.pdf section 3.3
-    k_max = np.ceil(np.max(X_max))
+    k_max = int(np.ceil(np.max(X_max)))
     # Initialize the expected value E||x_bar||^2
     cvx_expected_value = cvx.Variable(num_features, name='expected_value')
 
@@ -187,8 +187,9 @@ def get_defense_params(dataset: Dataset) -> dict:
     :param dataset: Dataset
     :return: dictionary of parameters
     """
+    PERCENTILE = 90
     X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-    classes = list(dataset.information_dict['class_map'].values())
+    classes = set(list(y.numpy()))
     centroids = get_centroids(dataset=dataset)
     centroid_vec = get_centroid_vec(centroids=centroids)
     sphere_radii = dict()
@@ -197,10 +198,10 @@ def get_defense_params(dataset: Dataset) -> dict:
         center = centroids[c]
         shifts_from_center = X[y == c] - center
         dists_from_center = np.linalg.norm(shifts_from_center, axis=1)
-        sphere_radii[c] = np.percentile(dists_from_center, dataset.alpha * 100)
+        sphere_radii[c] = np.percentile(dists_from_center, PERCENTILE)
         dists_from_slab = np.abs(X[y == c] @ centroid_vec -
                                  centroids[c] @ centroid_vec)
-        slab_radii[c] = np.percentile(dists_from_slab, dataset.alpha * 100)
+        slab_radii[c] = np.percentile(dists_from_slab, PERCENTILE)
     return {
         'sphere_radii': sphere_radii,
         'slab_radii': slab_radii,
@@ -217,15 +218,14 @@ def get_centroids(dataset: Dataset) -> dict:
     and centroid as value
     """
     X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-    classes = list(dataset.information_dict['class_map'].values())
+    classes = set(list(y.numpy()))
     centroids = dict()
     for c in classes:
         centroids[c] = np.mean(X[y == c].detach().cpu().numpy(), axis=0)
     return centroids
 
 
-def get_centroid_vec(centroids: Union[Tensor, np.ndarray],
-                     class_map: dict) -> np.ndarray:
+def get_centroid_vec(centroids: Union[Tensor, np.ndarray]) -> np.ndarray:
     """
     Returns the centroid vector of the dataset
     :param centroids: dictionary of centroids with class as key
@@ -234,10 +234,7 @@ def get_centroid_vec(centroids: Union[Tensor, np.ndarray],
     as keys and class value as value
     :return: centroid vector
     """
-    assert ['POSITIVE_CLASS', 'NEGATIVE_CLASS'] in class_map.keys(), \
-        'class_map must contain keys POSITIVE_CLASS and NEGATIVE_CLASS'
-    centroids_vec = centroids[class_map['POSITIVE_CLASS']] - centroids[
-        class_map['NEGATIVE_CLASS']]
+    centroids_vec = centroids[1] - centroids[0]
     #Normalize the centroid vector
     centroids_vec /= np.linalg.norm(centroids_vec)
     centroids_vec.reshape(1, -1)

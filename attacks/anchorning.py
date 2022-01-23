@@ -16,6 +16,7 @@ def anchoring_attack(
     attack_iters: int,
     project_fn: Callable,
     get_defense_params: Callable,
+    get_minimization_problem: Callable,
 ) -> Dataset:
     x_target = dict.fromkeys(['pos', 'neg'])
 
@@ -51,10 +52,14 @@ def anchoring_attack(
         
         # Load the feasible F_β ← B(D_c U D_p)
         beta = get_defense_params(ConcatDataset([D_c, D_p]))
-        
+        minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
+        import time
+        start = time.time()
         for i in range(len(D_p)):
-            D_p.X[i] = project_fn(D_p.X[i], beta) # project back to feasible set
-        
+            point_class = D_p.Y[i].item()
+            D_p.X[i] = torch.tensor(project_fn(D_p.X[i], beta, minimization_problem, point_class)) # project back to feasible set
+        end = time.time()
+        print(f"Projected {len(D_p)} points in {end - start} seconds.")
     return D_p
 
 
