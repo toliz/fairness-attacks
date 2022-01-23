@@ -51,7 +51,7 @@ def influence_attack(
         train_dataloader = DataLoader(D_train, batch_size=datamodule.batch_size, shuffle=True, num_workers=4)
         trainer.fit(model, train_dataloader)
         
-        # Procompute g_θ (H inverse is too expesive for analytical computation)
+        # Precompute g_θ (H inverse is too expensive for analytical computation)
         g_theta = __compute_g_theta(model, D_test, adv_loss)
         for i in ['pos', 'neg']:
             x_adv[i] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[i], y_adv[i]))
@@ -111,7 +111,7 @@ def __loss_gradient_wrt_input_and_params(
     L = loss(model(X), y)                           # Loss
     L_first_grad = grad(L, X, create_graph=True)    # Gradient of loss w.r.t. input
     L_first_grad = L_first_grad[0].squeeze(0)       # Grad always returns a tuple, because it treats input as a tuple.
-                                                    # In our case it treats X as (X, ), so we need to extact the first 
+                                                    # In our case it treats X as (X, ), so we need to extract the first
                                                     # element. Then we squeeze to discard the batch dimension
     
     # L_second_grad dimensions: num_params x num_input_features
@@ -126,7 +126,7 @@ def __loss_gradient_wrt_input_and_params(
     return L_second_grad
 
 def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Callable, v: Tensor) -> Tensor:
-    """Efficiently computes a numeric approximiation of the inverse Hessian Vector Product 
+    """Efficiently computes a numeric approximation of the inverse Hessian Vector Product
     between the test loss of a model w.r.t the model's parameters and a vector v.
 
     Args:

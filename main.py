@@ -187,7 +187,7 @@ if __name__ == '__main__':
     parser.add_argument('--tau',
                         default=0,
                         type=float,
-                        help='Vicinity distance of pertubed adversarial points')
+                        help='Vicinity distance of perturbed adversarial points')
 
     # Influence Attack
     parser.add_argument('--fairness_loss',
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                         type=str,
                         help='Description of the experiment')
     parser.add_argument('--logger_mode',
-                        default='online',
+                        default='disabled',
                         type=str,
                         choices=['online', 'offline', 'disabled'],
                         help='Mode of logger')

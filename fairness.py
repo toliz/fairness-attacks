@@ -110,7 +110,7 @@ class FairnessLoss(nn.Module):
     """The Decision Boundary Covariance loss as defined by Zafar et. al
     (https://arxiv.org/abs/1507.05259).
     
-    Currently this loss supports only binary classication problem solved
+    Currently, this loss supports only binary classification problem solved
     by linear models.
     """
     
