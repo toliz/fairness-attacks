@@ -33,6 +33,11 @@ class Dataset(TorchDataset):
     def get_disadvantaged_subset(self) -> Dataset:
         return Dataset(self.X[~self.adv_mask], self.Y[~self.adv_mask], self.adv_mask[~self.adv_mask])
 
+    def get_positive_count(self) -> int:
+        return self.Y.bool().sum()
+
+    def get_negative_count(self) -> int:
+        return (~self.Y.bool()).sum()
 
 class ConcatDataset(Dataset):
     def __init__(self, datasets: List[Dataset]):
