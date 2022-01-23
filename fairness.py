@@ -77,16 +77,16 @@ class EOD(Metric):
         """
 
         # Advantaged and disadvantaged predictions with label +1
-        preds_adv = preds[torch.logical_and(torch.tensor(adv_mask), targets.bool())]
-        preds_dis = preds[torch.logical_and(torch.tensor(~adv_mask), targets.bool())]
+        preds_adv = preds[torch.logical_and(adv_mask, targets.bool())]
+        preds_dis = preds[torch.logical_and(~adv_mask, targets.bool())]
 
         # Update the number of advantaged and disadvantaged points with label +1 predicted as positive
         self.preds_adv_pos += len(preds_adv[preds_adv == 1])
         self.preds_dis_pos += len(preds_dis[preds_dis == 1])
 
         # Update the number of advantaged and disadvantaged points with target +1
-        self.num_adv += torch.logical_and(torch.tensor(adv_mask), (targets.bool())).sum()
-        self.num_dis += torch.logical_and(torch.tensor(~adv_mask), (targets.bool())).sum()
+        self.num_adv += torch.logical_and(adv_mask, (targets.bool())).sum()
+        self.num_dis += torch.logical_and(~adv_mask, (targets.bool())).sum()
 
     def compute(self):
         """
