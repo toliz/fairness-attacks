@@ -17,6 +17,8 @@ from trainingmodule import BinaryClassifier
 
 
 def main(args: argparse.Namespace):
+    pl.seed_everything(123)
+
     test_results = []
     for run in range(args.num_runs):
         # Set-up W&B logger
@@ -58,7 +60,7 @@ def main(args: argparse.Namespace):
                 datamodule=dm,
                 trainer=trainer,
                 adv_loss=adv_loss,
-                eps=args.eps,
+                eps=args.epsilon,
                 eta=args.eta,
                 attack_iters=args.attack_iters,
                 project_fn=project,
@@ -68,7 +70,7 @@ def main(args: argparse.Namespace):
         elif args.attack == 'RAA':
             poisoned_dataset = anchoring_attack(
                 D_c=dm.get_train_dataset(),
-                eps=args.eps,
+                eps=args.epsilon,
                 tau=args.tau, 
                 sampling_method='random',
                 attack_iters=args.attack_iters,
@@ -78,7 +80,7 @@ def main(args: argparse.Namespace):
         elif args.attack == 'NRAA':
             poisoned_dataset = anchoring_attack(
                 D_c=dm.get_train_dataset(),
-                eps=args.eps,
+                eps=args.epsilon,
                 tau=args.tau, 
                 sampling_method='non-random',
                 attack_iters=args.attack_iters,
