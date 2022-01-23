@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod, ABCMeta
-from typing import Optional
+from typing import Optional, Tuple
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader
 
-from .dataset import Dataset
+from .dataset import ConcatDataset, Dataset
 
 
 class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
@@ -53,6 +53,9 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
                 adv_mask=self.get_advantaged_mask(x_test)
             )
 
+    def get_input_size(self) -> Tuple:
+        return tuple(self.train_data[0][0].shape)
+
     @abstractmethod
     def get_target_file_name(self) -> str:
         raise NotImplementedError()
@@ -82,3 +85,6 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
     
     def get_test_dataset(self) -> Dataset:
         return self.test_data
+
+    def update_train_dataset(self, dataset: Dataset) -> None:
+        self.train_data = ConcatDataset([self.train_data, dataset])
