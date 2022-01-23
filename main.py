@@ -48,22 +48,13 @@ def create_poisoned_dataset(args: argparse.Namespace,
             defense_fn=defense,
             get_defense_params=get_defense_params
         )
-    elif args.attack == 'RAA':
+    elif args.attack in ('RAA', 'NRAA'):
         poisoned_dataset = anchoring_attack(
             D_c=dm.get_train_dataset(),
+            sensitive_idx=dm.get_sensitive_index(),
             eps=args.eps,
             tau=args.tau,
-            sampling_method='random',
-            attack_iters=args.attack_iters,
-            project_fn=project,
-            get_defense_params=get_defense_params
-        )
-    elif args.attack == 'NRAA':
-        poisoned_dataset = anchoring_attack(
-            D_c=dm.get_train_dataset(),
-            eps=args.eps,
-            tau=args.tau,
-            sampling_method='non-random',
+            sampling_method='random' if 'RAA' else 'non-random',
             attack_iters=args.attack_iters,
             project_fn=project,
             get_defense_params=get_defense_params
