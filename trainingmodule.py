@@ -86,4 +86,4 @@ class BinaryClassifier(pl.LightningModule):
 
         Returns: predictions
         """
-        return torch.heaviside(logits, torch.tensor(0).float()).int().reshape(-1)
+        return torch.heaviside(logits, torch.tensor(0.)).int().flatten()
