@@ -7,8 +7,8 @@ from torch.autograd.functional import vhp
 from torch.utils.data import ConcatDataset, DataLoader
 from typing import Callable, Dict, Tuple, Union
 
-from ..trainingmodule import BinaryClassifier
-from ..datamodules.datamodule import Dataset, Datamodule
+from trainingmodule import BinaryClassifier
+from datamodules import Dataset, Datamodule
 
 
 def influence_attack(

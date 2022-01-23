@@ -1,8 +1,9 @@
-from torch import Tensor
-from ..datamodules import Dataset
 import numpy as np
 import cvxpy as cvx
-from typing import Union, Tuple
+
+from datamodules import Dataset
+from torch import Tensor
+from typing import Union
 
 
 def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,

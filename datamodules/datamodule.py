@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import Dataset
+from .dataset import Dataset
 
 
 class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):

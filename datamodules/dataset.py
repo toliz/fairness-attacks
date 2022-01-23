@@ -6,7 +6,7 @@ from torch import Tensor
 from typing import Tuple, Union
 
 
-class Dataset(torch.utils.Dataset):
+class Dataset(torch.utils.data.Dataset):
     def __init__(self, X: Tensor, Y: Tensor, adv_mask: torch.BoolTensor):
         super().__init__()
 

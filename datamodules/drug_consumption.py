@@ -1,4 +1,4 @@
-from datamodule import Datamodule
+from .datamodule import Datamodule
 
 class DrugConsumptionDatamodule(Datamodule):
     def __init__(self, data_dir: str, batch_size: int):
