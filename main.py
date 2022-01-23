@@ -14,6 +14,64 @@ from attacks.utils import project, defense, get_defense_params
 from datamodules import GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
+from datamodules.datamodule import Datamodule
+
+
+def create_poisoned_dataset(args: argparse.Namespace,
+                            dm: Datamodule,
+                            model: BinaryClassifier,
+                            trainer: pl.Trainer):
+    """
+    Function that returns the poisoned dataset
+    Args:
+        args: arguments from parser
+        dm: datamodule with the clean dataset
+        model: model to get the gradients for influence attack
+        trainer: lightning trainer for influence attack
+
+    Returns: the poisoned dataset
+    """
+    if args.attack == 'IAF':  # TODO: the influence attack will train the model, need copy
+        bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
+        adv_loss = lambda _model, X, y: (
+                bce_loss(_model(X), y) + args.lamda * fairness_loss(X, _model.get_params(flattened=True))
+        )
+        poisoned_dataset = influence_attack(
+            model=model,
+            datamodule=dm,
+            trainer=trainer,
+            adv_loss=adv_loss,
+            eps=args.eps,
+            eta=args.eta,
+            attack_iters=args.attack_iters,
+            project_fn=project,
+            defense_fn=defense,
+            get_defense_params=get_defense_params
+        )
+    elif args.attack == 'RAA':
+        poisoned_dataset = anchoring_attack(
+            D_c=dm.get_train_dataset(),
+            eps=args.eps,
+            tau=args.tau,
+            sampling_method='random',
+            attack_iters=args.attack_iters,
+            project_fn=project,
+            get_defense_params=get_defense_params
+        )
+    elif args.attack == 'NRAA':
+        poisoned_dataset = anchoring_attack(
+            D_c=dm.get_train_dataset(),
+            eps=args.eps,
+            tau=args.tau,
+            sampling_method='non-random',
+            attack_iters=args.attack_iters,
+            project_fn=project,
+            get_defense_params=get_defense_params
+        )
+    else:
+        raise ValueError(f'Unknown attack {args.attack}.')
+
+    return poisoned_dataset
 
 
 def main(args: argparse.Namespace):
@@ -51,51 +109,9 @@ def main(args: argparse.Namespace):
         )
         
         # Poison the training set
-        if args.attack == 'IAF':
-            bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
-            adv_loss = lambda _model, X, y: (
-                bce_loss(_model(X), y) + \
-                args.lamda * fairness_loss(X, _model.get_params(flattened=True))
-            )
-            poisoned_dataset = influence_attack(
-                model=model,
-                datamodule=dm,
-                trainer=trainer,
-                adv_loss=adv_loss,
-                eps=args.eps,
-                eta=args.eta,
-                attack_iters=args.attack_iters,
-                project_fn=project,
-                defense_fn=defense,
-                get_defense_params=get_defense_params
-            )
-        elif args.attack == 'RAA':
-            poisoned_dataset = anchoring_attack(
-                D_c=dm.get_train_dataset(),
-                eps=args.eps,
-                tau=args.tau, 
-                sampling_method='random',
-                attack_iters=args.attack_iters,
-                project_fn=project,
-                get_defense_params=get_defense_params
-            )
-        elif args.attack == 'NRAA':
-            poisoned_dataset = anchoring_attack(
-                D_c=dm.get_train_dataset(),
-                eps=args.eps,
-                tau=args.tau, 
-                sampling_method='non-random',
-                attack_iters=args.attack_iters,
-                project_fn=project,
-                get_defense_params=get_defense_params
-            )
-        elif args.attack == 'None':
-            pass
-        else:
-            raise ValueError(f'Unknown attack {args.attack}.')
-            
         if args.attack != 'None':
-            dm.update_train_dataset(poisoned_dataset) # Poison dm's clean train dataset
+            poisoned_dataset = create_poisoned_dataset(args, dm, model, trainer)
+            dm.update_train_dataset(poisoned_dataset)
             
         # Train
         trainer.fit(model, dm)
