@@ -65,9 +65,9 @@ class BinaryClassifier(pl.LightningModule):
         # Log metrics
         # self.log('test_loss', loss, on_step=False, on_epoch=True)
         # self.log('test_acc', acc, on_step=False, on_epoch=True)
-        self.log('test_error', 1 - acc, on_step=True, on_epoch=True)
-        self.log('EOD', eod, on_step=True, on_epoch=True)
-        self.log('SPD', spd, on_step=True, on_epoch=True)
+        self.log('test_error', 1 - acc, on_step=False, on_epoch=True)
+        self.log('EOD', eod, on_step=False, on_epoch=True)
+        self.log('SPD', spd, on_step=False, on_epoch=True)
 
         return { 'loss': loss, 'test_error': 1 - acc, 'EOD': eod, 'SPD': spd }
 
