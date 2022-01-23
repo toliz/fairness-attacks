@@ -14,8 +14,8 @@ class Dataset(torch.utils.data.Dataset):
         self.Y = Y
         self.adv_mask = adv_mask
 
-    def __getitem__(self, idx: Union[int, Tensor]) -> Tuple[Tensor, Tensor]:
-        return self.X[idx], self.Y[idx]
+    def __getitem__(self, idx: Union[int, Tensor]) -> Tuple[Tensor, Tensor, Tensor]:
+        return self.X[idx], self.Y[idx], self.adv_mask[idx]
     
     def __len__(self) -> int:
         return len(self.X)
