@@ -1,7 +1,7 @@
 import torch
 
+from torch import nn, Tensor
 from torchmetrics import Metric
-from typing import List
 
 
 class SPD(Metric):
@@ -103,7 +103,6 @@ class EOD(Metric):
         eod = abs(p_adv - p_dis)
 
         return eod.item()
-from torch import nn
 
 
 class FairnessLoss(nn.Module):
@@ -114,11 +113,12 @@ class FairnessLoss(nn.Module):
     by linear models.
     """
     
-    def __init__(self, sensitive_attribute_idx):
+    def __init__(self, sensitive_attribute_idx: int):
         super().__init__()
+        
         self.sensitive_attribute_idx = sensitive_attribute_idx
         
-    def forward(self, X, theta):
+    def forward(self, X: Tensor, theta: Tensor):
         # Since FairnessLoss works only for linear models and binary
         # classification problems, model parameters should be just a vector
         assert isinstance(theta, torch.Tensor) and theta.ndim == 1
