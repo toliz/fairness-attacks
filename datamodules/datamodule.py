@@ -37,7 +37,7 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
         npz = np.load(self.path_to_file, allow_pickle=True)
 
         x_train, x_test = torch.tensor(npz['X_train']).float(), torch.tensor(npz['X_test']).float()
-        y_train, y_test = torch.tensor(npz['Y_train']).float(), torch.tensor(npz['Y_test']).float()
+        y_train, y_test = torch.tensor(npz['Y_train']).int(), torch.tensor(npz['Y_test']).int()
 
         if stage in (None, 'fit'):
             self.train_data = Dataset(

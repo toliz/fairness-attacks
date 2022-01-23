@@ -18,7 +18,7 @@ class BinaryClassifier(pl.LightningModule):
                  lr: float=1e-3,
                  weight_decay: float=0.09) -> None:
         super().__init__()
-        super().save_hyperparameters()
+        self.save_hyperparameters()
 
         if model == 'LogisticRegression':
             assert len(input_size) == 1, "Logistic regression expected 1D input"
@@ -58,9 +58,9 @@ class BinaryClassifier(pl.LightningModule):
 
         # Metrics
         spd = self.spd(predicts, adv_mask)
-        eod = self.eod(predicts, y.int(), adv_mask)
-        loss = self.loss(logits, y)
-        acc = self.acc(predicts, y.int())
+        eod = self.eod(predicts, y, adv_mask)
+        loss = self.loss(logits, y.float())
+        acc = self.acc(predicts, y)
 
         # Log metrics
         # self.log('test_loss', loss, on_step=False, on_epoch=True)
