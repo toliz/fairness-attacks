@@ -11,6 +11,8 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
     """
     Project point onto dataset
     """
+    assert ['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] in \
+              beta.keys(), "['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] not in beta"
     point = point.detach().clone()
     sphere_radii = beta['sphere_radii'][point_class]
     slab_radii = beta['slab_radii'][point_class]
@@ -24,6 +26,8 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        parameters))).items()
     }
+    assert ['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] in param_index_map.keys(), \
+        "['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] params not in the minimization problem"
     # cvxpy shenanigans to get the optimal value of the variable
     variables = minimization_problem.variables()
     variable_index_map = {
@@ -31,6 +35,8 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        variables))).items()
     }
+    assert ['x'] in variable_index_map.keys(), \
+        "['x'] variable not in the minimization problem"
     minimization_problem.parameters()[
         param_index_map['sphere_radius']].value = sphere_radii
     minimization_problem.parameters()[
