@@ -1,6 +1,6 @@
 from datamodule import Datamodule
 
-class GermanDatamodule(Datamodule):
+class GermanCreditDatamodule(Datamodule):
     def __init__(self, data_dir: str, batch_size: int):
         super().__init__('data.npz', data_dir, batch_size)
 
