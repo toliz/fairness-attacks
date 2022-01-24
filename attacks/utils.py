@@ -178,7 +178,36 @@ def get_minimization_problem(dataset: Dataset) -> Dataset:
 
 
 def defense(dataset: Dataset, beta: dict) -> Dataset:
-    raise NotImplementedError()
+    """
+    Prunes the dataset according to the feasible set.
+    :param dataset: Dataset (D_c \cup D_p)
+    :param beta: Dictionary of beta values for the feasible set
+    :return: Pruned dataset = (D_c \cup D_p) \cap F_b
+    """
+    PERCENTILE = 90
+    X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    classes = set(list(y.numpy()))
+    sphere_radii = beta['sphere_radii']
+    slab_radii = beta['slab_radii']
+    centroids = beta['centroids']
+    centroid_vec = beta['centroid_vec']
+    for c in classes:
+        center = centroids[c]
+        sphere_radius = sphere_radii[c]
+        slab_radius = slab_radii[c]
+        centroid_vec = centroid_vec[c]
+        shifts_from_center = X[y == c] - center
+        dists_from_center = np.linalg.norm(shifts_from_center, axis=1)
+        dists_from_slab = np.abs(X[y == c] @ centroid_vec - centroids[c] @ centroid_vec)
+        # Prune points that are too far from the sphere center
+        X[y[dists_from_center > sphere_radius] == c] = np.nan
+        # Prune points that are too far from the slab
+        X[y[dists_from_slab > slab_radius] == c] = np.nan
+        # Drop np.nan points
+        X[y == c] = X[y == c][~np.isnan(X[y == c])]
+    return Dataset(X, y)
+
+
 
 
 def get_defense_params(dataset: Dataset) -> dict:
