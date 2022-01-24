@@ -149,7 +149,7 @@ if __name__ == '__main__':
                         type=str,
                         help='Path to find or save dataset')
     parser.add_argument('--batch_size',
-                        default=64,
+                        default=100,
                         type=int,
                         help='Batch size to use')
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
                         choices=['LogisticRegression'],
                         help='Model to use')
     parser.add_argument('--epochs',
-                        default=100,
+                        default=300,
                         type=int,
                         help='Number of epochs for training')
     parser.add_argument('--num_runs',
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='RAA',
+                        default='None',
                         type=str,
                         choices=['None', 'IAF', 'RAA', 'NRAA'],
                         help='Attack to use')
