@@ -1,15 +1,15 @@
 import numpy as np
 import cvxpy as cvx
+import torch
 
 from datamodules import Dataset
 from torch import Tensor
 from typing import Union
 
 
-def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
-            point_class: int) -> Tensor:
+def __project_point(point: Tensor, point_class: int, beta: dict, minimization_problem: cvx.Problem) -> Tensor:
     """
-    Project point onto dataset
+    Project point onto feasible set
     :param point: Point to project
     :param beta: Defense parameters
     :param minimization_problem: Minimization problem
@@ -57,8 +57,27 @@ def project(point: Tensor, beta: dict, minimization_problem: cvx.Problem,
     projected_point = minimization_problem.variables()[
         variable_index_map['x']].value
 
-    return projected_point
+    return Tensor(projected_point)
 
+
+def project_dataset(dataset: Dataset, beta: dict, minimization_problem: cvx.Problem) -> Dataset:
+    num_features = dataset.X.shape[1]
+
+    XY = torch.hstack((dataset.X, dataset.Y.unsqueeze(1)))
+    unique_XY, inverse_map = torch.unique(XY, return_inverse=True, dim=0)
+
+    unique_X_proj = torch.empty((len(unique_XY), num_features))
+    for i, xy in enumerate(unique_XY):
+        x, y = torch.split(xy, num_features)
+        unique_X_proj[i] = __project_point(x, int(y), beta, minimization_problem)
+
+    X_proj = torch.empty_like(dataset.X, dtype=torch.float)
+    assert isinstance(X_proj, torch.FloatTensor)
+
+    for i, idx in enumerate(inverse_map):
+        X_proj[i] = unique_X_proj[idx]
+
+    return Dataset(X_proj, dataset.Y, dataset.adv_mask)
 
 def cvx_dot(a: Union[cvx.Parameter, cvx.Variable],
             b: Union[cvx.Parameter, cvx.Variable]) -> cvx.Variable:
@@ -71,7 +90,7 @@ def cvx_dot(a: Union[cvx.Parameter, cvx.Variable],
     return cvx.sum(cvx.multiply(a, b))
 
 
-def get_minimization_problem(dataset: Dataset) -> Dataset:
+def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
     """
     Build a minimization problem for projecting points onto the feasible set
     :param dataset: Dataset
@@ -184,7 +203,6 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
     :param beta: Dictionary of beta values for the feasible set
     :return: Pruned dataset = (D_c \cup D_p) \cap F_b
     """
-    PERCENTILE = 90
     X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
     classes = set(list(y))
     sphere_radii = beta['sphere_radii']
@@ -261,13 +279,11 @@ def get_centroids(dataset: Dataset) -> dict:
     return centroids
 
 
-def get_centroid_vec(centroids: Union[Tensor, np.ndarray]) -> np.ndarray:
+def get_centroid_vec(centroids: dict) -> np.ndarray:
     """
     Returns the centroid vector of the dataset
     :param centroids: dictionary of centroids with class as key
     and centroid as value
-    :param class_map: dictionary of POSITIVE_CLASS, NEGATIVE_CLASS
-    as keys and class value as value
     :return: centroid vector
     """
     centroids_vec = centroids[1] - centroids[0]

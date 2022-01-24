@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
 from attacks import influence_attack, anchoring_attack
-from attacks.utils import get_minimization_problem, project, defense, get_defense_params
+from attacks.utils import get_minimization_problem, project_dataset, defense, get_defense_params
 from datamodules import GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
@@ -44,7 +44,7 @@ def create_poisoned_dataset(args: argparse.Namespace,
             eps=args.eps,
             eta=args.eta,
             attack_iters=args.attack_iters,
-            project_fn=project,
+            project_fn=project_dataset,
             defense_fn=defense,
             get_defense_params=get_defense_params,
             get_minimization_problem=get_minimization_problem,
@@ -57,7 +57,7 @@ def create_poisoned_dataset(args: argparse.Namespace,
             tau=args.tau,
             sampling_method='random' if args.attack == 'RAA' else 'non-random',
             attack_iters=args.attack_iters,
-            project_fn=project,
+            project_fn=project_dataset,
             get_defense_params=get_defense_params,
             get_minimization_problem=get_minimization_problem,
         )
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='IAF',
+                        default='RAA',
                         type=str,
                         choices=['None', 'IAF', 'RAA', 'NRAA'],
                         help='Attack to use')
