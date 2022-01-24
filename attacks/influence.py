@@ -8,6 +8,7 @@ from torch.autograd.functional import vhp
 from torch.utils.data import DataLoader
 from typing import Callable, Dict, Tuple, Union
 
+from attacks.utils import defense, get_defense_params, get_minimization_problem, project_point
 from trainingmodule import BinaryClassifier
 from datamodules import ConcatDataset, Dataset, Datamodule
 
@@ -20,10 +21,10 @@ def influence_attack(
     eps: float,
     eta: float,
     attack_iters: int,
-    project_fn: Callable,
-    defense_fn: Callable,
-    get_defense_params: Callable,
-    get_minimization_problem: Callable,
+    project_fn: Callable = project_point,
+    defense_fn: Callable = defense,
+    get_defense_params: Callable = get_defense_params,
+    get_minimization_problem: Callable = get_minimization_problem,
 ) -> Dataset:
     model = deepcopy(model) # copy model so the one passed as argument doesn't change
     

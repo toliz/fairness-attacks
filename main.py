@@ -11,7 +11,6 @@ from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
 from attacks import influence_attack, anchoring_attack
-from attacks.utils import get_minimization_problem, project_dataset, project_point, defense, get_defense_params
 from datamodules import GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
@@ -40,7 +39,7 @@ def create_poisoned_dataset(
                 bce_loss(_model(X), y.float()) + args.lamda * fairness_loss(X, *_model.get_params())
         )
         
-        # Create training pipeline
+        # Create new training pipeline to use in influence attack
         trainer = pl.Trainer(
             max_epochs=100,
             gpus=1 if torch.cuda.is_available() else 0,
@@ -55,10 +54,6 @@ def create_poisoned_dataset(
             eps=args.eps,
             eta=args.eta,
             attack_iters=args.attack_iters,
-            project_fn=project_point,
-            defense_fn=defense,
-            get_defense_params=get_defense_params,
-            get_minimization_problem=get_minimization_problem,
         )
     elif args.attack in ('RAA', 'NRAA'):
         poisoned_dataset = anchoring_attack(
@@ -68,9 +63,6 @@ def create_poisoned_dataset(
             tau=args.tau,
             sampling_method='random' if args.attack == 'RAA' else 'non-random',
             attack_iters=args.attack_iters,
-            project_fn=project_dataset,
-            get_defense_params=get_defense_params,
-            get_minimization_problem=get_minimization_problem,
         )
     else:
         raise ValueError(f'Unknown attack {args.attack}.')

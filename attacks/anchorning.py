@@ -1,9 +1,11 @@
 from typing import Callable, Tuple
 
 import torch
+
 from torch import Tensor
 from torch.distributions.multivariate_normal import MultivariateNormal
 
+from attacks.utils import get_defense_params, get_minimization_problem, project_dataset
 from datamodules import ConcatDataset, Dataset
 
 
@@ -14,9 +16,9 @@ def anchoring_attack(
     tau: float,
     sampling_method: str,
     attack_iters: int,
-    project_fn: Callable,
-    get_defense_params: Callable,
-    get_minimization_problem: Callable,
+    project_fn: Callable = project_dataset,
+    get_defense_params: Callable = get_defense_params,
+    get_minimization_problem: Callable = get_minimization_problem,
 ) -> Dataset:
     x_target = dict.fromkeys(['pos', 'neg'])
 
