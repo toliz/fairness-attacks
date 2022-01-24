@@ -22,6 +22,7 @@ def influence_attack(
     project_fn: Callable,
     defense_fn: Callable,
     get_defense_params: Callable,
+    get_minimization_problem: Callable,
 ) -> Dataset:
     x_adv, y_adv = dict.fromkeys(['pos', 'neg']), dict.fromkeys(['pos', 'neg'])
     
@@ -53,13 +54,18 @@ def influence_attack(
         
         # Precompute g_θ (H inverse is too expensive for analytical computation)
         g_theta = __compute_g_theta(model, D_test, adv_loss)
+        minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
+        import time
+        start = time.time()
         for i in ['pos', 'neg']:
-            x_adv[i] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[i], y_adv[i]))
-            x_adv[i] = project_fn(x_adv[i], beta) # project back to feasible set
-
+            point_class = 1 if i == 'pos' else 0
+            x_adv[i] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[i].type(D_c.X.dtype), y_adv[i]))
+            x_adv[i] = torch.tensor(project_fn(x_adv[i], beta, minimization_problem, point_class)) # project back to feasible set
+        end = time.time()
+        print(f"Influence + projection took {end - start} seconds")
         # Update D_p
         D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
-        
+        D_p.X = D_p.X.type(D_c.X.dtype)
         # Update feasible set
         beta = get_defense_params(ConcatDataset([D_c, D_p]))
         
@@ -83,7 +89,7 @@ def __compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable)
     model.zero_grad() # zero gradients for safety
     
     # Accumulate model's gradients over dataset
-    L = loss(model, model(dataset.X), dataset.Y)
+    L = loss(model, dataset.X , dataset.Y)
     L.backward()
     
     return model.get_grads()
@@ -108,7 +114,7 @@ def __loss_gradient_wrt_input_and_params(
     X, y = X.unsqueeze(0), y.unsqueeze(0)   # create mini-batch of 1 sample to match loss expected shapes
     X.requires_grad_(True)                  # track gradients on input
     
-    L = loss(model(X), y)                           # Loss
+    L = loss(model, X, y.float())                           # Loss
     L_first_grad = grad(L, X, create_graph=True)    # Gradient of loss w.r.t. input
     L_first_grad = L_first_grad[0].squeeze(0)       # Grad always returns a tuple, because it treats input as a tuple.
                                                     # In our case it treats X as (X, ), so we need to extract the first
@@ -141,10 +147,10 @@ def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Calla
     inverse_hvp_estimate = v.clone().detach()   # first estimate of H^{-1}@v
     
     # Iterate dataset over random batches
-    for X, y in DataLoader(dataset, batch_size=10, shuffle=True):
+    for X, y, _ in DataLoader(dataset, batch_size=10, shuffle=True):
         def current_batch_loss(*theta):
             model.set_params(theta)
-            return loss(model(X), y)
+            return loss(model, X, y)
         
         # Iteratively update the estimate as H^{-1}@v <- v + (I - Hessian(L)) @ H^{-1}@v or
         # equivalently H^{-1}@v <- v + H^{-1}@v - hvp(L, H^{-1}@v), where L is the test loss

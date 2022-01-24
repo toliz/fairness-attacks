@@ -128,4 +128,4 @@ class FairnessLoss(nn.Module):
         z = X[:, self.sensitive_attribute_idx]
         
         # vectorized version of 1/N Σ[(z_i - z_bar) * θ.T * x_i]
-        return torch.mean((z - z.mean()) * (X @ theta))
+        return torch.mean((z - z.mean()) * (X @ theta[:-1]))
