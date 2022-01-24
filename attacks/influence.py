@@ -57,7 +57,7 @@ def influence_attack(
         minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
         for i, c in enumerate(['neg', 'pos']):
             x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[c], y_adv[c]))
-            x_adv[c] = project_fn(x_adv[c], beta, minimization_problem, i) # project back to feasible set
+            x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
 
         # Update D_p
         D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)

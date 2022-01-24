@@ -7,7 +7,7 @@ from torch import Tensor
 from typing import Union
 
 
-def __project_point(point: Tensor, point_class: int, beta: dict, minimization_problem: cvx.Problem) -> Tensor:
+def project_point(point: Tensor, point_class: int, beta: dict, minimization_problem: cvx.Problem) -> Tensor:
     """
     Project point onto feasible set
     :param point: Point to project

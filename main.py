@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
 from attacks import influence_attack, anchoring_attack
-from attacks.utils import get_minimization_problem, project_dataset, defense, get_defense_params
+from attacks.utils import get_minimization_problem, project_dataset, project_point, defense, get_defense_params
 from datamodules import GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
@@ -44,7 +44,7 @@ def create_poisoned_dataset(args: argparse.Namespace,
             eps=args.eps,
             eta=args.eta,
             attack_iters=args.attack_iters,
-            project_fn=project_dataset,
+            project_fn=project_point,
             defense_fn=defense,
             get_defense_params=get_defense_params,
             get_minimization_problem=get_minimization_problem,
