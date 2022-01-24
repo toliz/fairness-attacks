@@ -88,8 +88,8 @@ class BinaryClassifier(pl.LightningModule):
         """
         return torch.heaviside(logits, torch.tensor(0).float()).int().reshape(-1)
 
-    def get_params(self, flattened=False):
-        return self.linear.get_params(flattened=flattened)
+    def get_params(self):
+        return self.linear.get_params()
 
     def get_grads(self):
         return self.linear.get_grads()

@@ -110,7 +110,7 @@ class FairnessLoss(nn.Module):
     """The Decision Boundary Covariance loss as defined by Zafar et. al
     (https://arxiv.org/abs/1507.05259).
     
-    Currently, this loss supports only binary classification problem solved
+    Currently, this loss supports only binary classification problems solved
     by linear models.
     """
     
@@ -119,13 +119,12 @@ class FairnessLoss(nn.Module):
         
         self.sensitive_attribute_idx = sensitive_attribute_idx
         
-    def forward(self, X: Tensor, theta: Tensor):
-        # Since FairnessLoss works only for linear models and binary
-        # classification problems, model parameters should be just a vector
-        assert isinstance(theta, torch.Tensor) and theta.ndim == 1
+    def forward(self, X: Tensor, W: Tensor, b: Tensor):
+        # Assert we have linear model for binary classification
+        assert W.ndim == 2 and b.shape == torch.Size([1])
         
-        # get sensitive attribute from data
+        # Get sensitive attribute from data
         z = X[:, self.sensitive_attribute_idx]
         
-        # vectorized version of 1/N Σ[(z_i - z_bar) * θ.T * x_i]
-        return torch.mean((z - z.mean()) * (X @ theta[:-1]))
+        # Vectorized version of 1/N Σ[(z_i - z_bar) * θ.T * x_i]
+        return torch.mean((z - z.mean()) * (X @ W.flatten() + b))

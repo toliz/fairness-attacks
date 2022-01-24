@@ -34,7 +34,7 @@ def create_poisoned_dataset(args: argparse.Namespace,
     if args.attack == 'IAF':  # TODO: the influence attack will train the model, need copy
         bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
         adv_loss = lambda _model, X, y: (
-                bce_loss(_model(X), y.float()) + args.lamda * fairness_loss(X, _model.get_params(flattened=True))
+                bce_loss(_model(X), y.float()) + args.lamda * fairness_loss(X, *_model.get_params())
         )
         poisoned_dataset = influence_attack(
             model=model,
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                         choices=['LogisticRegression'],
                         help='Model to use')
     parser.add_argument('--epochs',
-                        default=10,
+                        default=1,
                         type=int,
                         help='Number of epochs for training')
     parser.add_argument('--num_runs',
