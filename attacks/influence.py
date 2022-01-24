@@ -83,7 +83,7 @@ def __compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable)
     model.zero_grad() # zero gradients for safety
     
     # Accumulate model's gradients over dataset
-    L = loss(model(dataset.X), dataset.Y)
+    L = loss(model, model(dataset.X), dataset.Y)
     L.backward()
     
     return model.get_grads()

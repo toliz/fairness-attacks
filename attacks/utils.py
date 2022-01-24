@@ -186,26 +186,33 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
     """
     PERCENTILE = 90
     X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
-    classes = set(list(y.numpy()))
+    classes = set(list(y))
     sphere_radii = beta['sphere_radii']
     slab_radii = beta['slab_radii']
     centroids = beta['centroids']
     centroid_vec = beta['centroid_vec']
+    masks = {}
     for c in classes:
         center = centroids[c]
         sphere_radius = sphere_radii[c]
         slab_radius = slab_radii[c]
-        centroid_vec = centroid_vec[c]
-        shifts_from_center = X[y == c] - center
+        shifts_from_center = X - center
         dists_from_center = np.linalg.norm(shifts_from_center, axis=1)
-        dists_from_slab = np.abs(X[y == c] @ centroid_vec - centroids[c] @ centroid_vec)
+        dists_from_slab = np.abs(X @ centroid_vec - centroids[c] @ centroid_vec)
         # Prune points that are too far from the sphere center
-        X[y[dists_from_center > sphere_radius] == c] = np.nan
+        masks[c] = (dists_from_center < sphere_radius)
         # Prune points that are too far from the slab
-        X[y[dists_from_slab > slab_radius] == c] = np.nan
-        # Drop np.nan points
-        X[y == c] = X[y == c][~np.isnan(X[y == c])]
-    return Dataset(X, y)
+        masks[c] &= (dists_from_slab < slab_radius)
+        masks[c] &= y == c
+
+    # Create mask applying logical OR to all masks
+    mask = np.logical_or.reduce(list(masks.values()))
+    # Calculate new advantaged mask
+    old_adv_mask = dataset.adv_mask.detach().clone().numpy()
+    new_adv_mask = old_adv_mask[mask]
+    # Create new dataset
+    new_dataset = Dataset(X[mask], y[mask], new_adv_mask)
+    return new_dataset
 
 
 
