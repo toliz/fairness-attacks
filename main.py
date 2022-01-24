@@ -6,6 +6,7 @@ import utils
 import wandb
 
 from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
@@ -17,25 +18,35 @@ from trainingmodule import BinaryClassifier
 from datamodules.datamodule import Datamodule
 
 
-def create_poisoned_dataset(args: argparse.Namespace,
-                            dm: Datamodule,
-                            model: BinaryClassifier,
-                            trainer: pl.Trainer):
+def create_poisoned_dataset(
+    args: argparse.Namespace,
+    dm: Datamodule,
+    model: BinaryClassifier,
+):
     """
     Function that returns the poisoned dataset
+    
     Args:
         args: arguments from parser
         dm: datamodule with the clean dataset
         model: model to get the gradients for influence attack
-        trainer: lightning trainer for influence attack
 
     Returns: the poisoned dataset
     """
-    if args.attack == 'IAF':  # TODO: the influence attack will train the model, need copy
+    if args.attack == 'IAF':
+        # Create adversarial loss
         bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
         adv_loss = lambda _model, X, y: (
                 bce_loss(_model(X), y.float()) + args.lamda * fairness_loss(X, *_model.get_params())
         )
+        
+        # Create training pipeline
+        trainer = pl.Trainer(
+            max_epochs=100,
+            gpus=1 if torch.cuda.is_available() else 0,
+            callbacks=[EarlyStopping(monitor="train_loss", mode="min")]
+        )
+        
         poisoned_dataset = influence_attack(
             model=model,
             datamodule=dm,
@@ -103,7 +114,7 @@ def main(args: argparse.Namespace):
         
         # Poison the training set
         if args.attack != 'None':
-            poisoned_dataset = create_poisoned_dataset(args, dm, model, trainer)
+            poisoned_dataset = create_poisoned_dataset(args, dm, model)
             dm.update_train_dataset(poisoned_dataset)
             
         # Train
