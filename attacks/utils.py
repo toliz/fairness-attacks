@@ -69,10 +69,10 @@ def project_dataset(dataset: Dataset, beta: dict, minimization_problem: cvx.Prob
     unique_X_proj = torch.empty((len(unique_XY), num_features))
     for i, xy in enumerate(unique_XY):
         x, y = torch.split(xy, num_features)
-        unique_X_proj[i] = __project_point(x, int(y), beta, minimization_problem)
+        unique_X_proj[i] = project_point(x, int(y), beta, minimization_problem)
 
     X_proj = torch.empty_like(dataset.X, dtype=torch.float)
-    assert isinstance(X_proj, torch.FloatTensor)
+    assert isinstance(X_proj, torch.Tensor)
 
     for i, idx in enumerate(inverse_map):
         X_proj[i] = unique_X_proj[idx]

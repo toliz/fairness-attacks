@@ -1,7 +1,7 @@
 from typing import Callable, Tuple
 
 import torch
-from torch import Tensor, FloatTensor
+from torch import Tensor
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 from datamodules import ConcatDataset, Dataset
@@ -97,7 +97,7 @@ def __get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
     return mask.cumsum(dim=0)[idx]
 
 def __get_neighbors(
-        X: FloatTensor,
+        X: Tensor,
         mask: torch.BoolTensor,
         distance_threshold: float = 3,
         distance_type: str = 'euclidian'
@@ -111,7 +111,7 @@ def __get_neighbors(
 
     return neighbor_counts
 
-def __get_distances(x_target: FloatTensor, X: FloatTensor, distance_type: str = 'euclidian') -> Tensor:
+def __get_distances(x_target: Tensor, X: Tensor, distance_type: str = 'euclidian') -> Tensor:
     differences = X - x_target
 
     if distance_type == 'manhattan':
@@ -133,7 +133,7 @@ def __generate_perturbed_points(
     targets = torch.empty(n_perturbed, dtype=torch.int)
     adv_mask = torch.empty(n_perturbed, dtype=torch.bool)
 
-    assert isinstance(points, torch.FloatTensor)
+    assert isinstance(points, torch.Tensor)
     assert isinstance(targets, torch.IntTensor)
     assert isinstance(adv_mask, torch.BoolTensor)
 

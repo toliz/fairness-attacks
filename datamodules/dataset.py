@@ -2,26 +2,26 @@ from __future__ import annotations
 
 import torch
 
-from torch import Tensor, FloatTensor, BoolTensor, IntTensor
+from torch import Tensor, BoolTensor, IntTensor
 from torch.utils.data import Dataset as TorchDataset
 from typing import Tuple, Union, List
 
 
 class Dataset(TorchDataset):
-    def __init__(self, X: FloatTensor, Y: IntTensor, adv_mask: BoolTensor):
+    def __init__(self, X: Tensor, Y: IntTensor, adv_mask: BoolTensor):
         super().__init__()
 
         self.X = X
         self.Y = Y
         self.adv_mask = adv_mask
 
-    def __getitem__(self, idx: Union[int, Tensor]) -> Tuple[FloatTensor, IntTensor, BoolTensor]:
+    def __getitem__(self, idx: Union[int, Tensor]) -> Tuple[Tensor, IntTensor, BoolTensor]:
         return self.X[idx], self.Y[idx], self.adv_mask[idx]
     
     def __len__(self) -> int:
         return len(self.X)
         
-    def sample(self) -> Tuple[Tensor, Tensor]:
+    def sample(self) -> Tuple[Tensor, IntTensor, BoolTensor]:
         rand_idx = torch.randint(high=len(self.X), size=(1,))
         x, y, adv_mask = self[rand_idx]
         
@@ -45,7 +45,7 @@ class ConcatDataset(Dataset):
         Y = torch.concat([d.Y for d in datasets])
         adv_mask = torch.concat([d.adv_mask for d in datasets])
 
-        assert isinstance(X, FloatTensor)
+        assert isinstance(X, Tensor)
         assert isinstance(Y, IntTensor)
         assert isinstance(adv_mask, BoolTensor)
         super().__init__(X, Y, adv_mask)
