@@ -233,8 +233,6 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
     return new_dataset
 
 
-
-
 def get_defense_params(dataset: Dataset) -> dict:
     """
     Get the parameters for the defense

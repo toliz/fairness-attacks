@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 
+from copy import deepcopy
 from torch import Tensor
 from torch.autograd import grad
 from torch.autograd.functional import vhp
@@ -24,6 +25,8 @@ def influence_attack(
     get_defense_params: Callable,
     get_minimization_problem: Callable,
 ) -> Dataset:
+    model = deepcopy(model) # copy model so the one passed as argument doesn't change
+    
     x_adv, y_adv = dict.fromkeys(['pos', 'neg']), dict.fromkeys(['pos', 'neg'])
     
     D_c, D_test = datamodule.get_train_dataset(), datamodule.get_test_dataset()
