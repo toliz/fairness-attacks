@@ -11,10 +11,9 @@ from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
 from attacks import influence_attack, anchoring_attack
-from datamodules import GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
+from datamodules import Datamodule, GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
-from datamodules.datamodule import Datamodule
 
 
 def create_poisoned_dataset(
@@ -43,7 +42,9 @@ def create_poisoned_dataset(
         trainer = pl.Trainer(
             max_epochs=100,
             gpus=1 if torch.cuda.is_available() else 0,
-            callbacks=[EarlyStopping(monitor="train_loss", mode="min")]
+            enable_model_summary=False,
+            enable_progress_bar=False,
+            callbacks=[EarlyStopping(monitor="train_loss", mode="min", patience=10)]
         )
         
         poisoned_dataset = influence_attack(
@@ -101,7 +102,7 @@ def main(args: argparse.Namespace):
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             logger=wandb_logger,
-            callbacks=[TQDMProgressBar()]
+            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_loss", mode="min", patience=10)]
         )
         
         # Poison the training set
@@ -164,7 +165,7 @@ if __name__ == '__main__':
                         choices=['LogisticRegression'],
                         help='Model to use')
     parser.add_argument('--epochs',
-                        default=1,
+                        default=300,
                         type=int,
                         help='Number of epochs for training')
     parser.add_argument('--num_runs',
@@ -183,7 +184,7 @@ if __name__ == '__main__':
                         type=float,
                         help='Percentage of poisoned data to generate compared to clean data')
     parser.add_argument('--attack_iters',
-                        default=10000,
+                        default=100,
                         type=int,
                         help='Attack iterations')
 
