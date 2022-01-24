@@ -67,17 +67,8 @@ def __sample(dataset: Dataset, sampling_method: str) -> Tuple[Tensor, Tensor]:
     if sampling_method not in ['random', 'non-random']:
         raise NotImplementedError(f'Sampling method {sampling_method} not implemented.')
 
-    advantaged_subset = dataset.get_advantaged_subset()
-    disadvantaged_subset = dataset.get_disadvantaged_subset()
-
-    neg_adv_mask = torch.logical_and(
-        advantaged_subset.adv_mask,
-        ~advantaged_subset.Y.bool()
-    )
-    pos_disadv_mask = torch.logical_and(
-        disadvantaged_subset.adv_mask,
-        disadvantaged_subset.Y.bool()
-    )
+    neg_adv_mask = torch.logical_and(dataset.adv_mask, ~dataset.Y.bool())
+    pos_disadv_mask = torch.logical_and(~dataset.adv_mask, dataset.Y.bool())
 
     assert isinstance(neg_adv_mask, torch.BoolTensor)
     assert isinstance(pos_disadv_mask, torch.BoolTensor)
@@ -95,8 +86,9 @@ def __sample(dataset: Dataset, sampling_method: str) -> Tuple[Tensor, Tensor]:
     return dataset.X[neg_idx].squeeze(), dataset.X[pos_idx].squeeze()
 
 def __get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
-    idx = torch.randint(high=len(mask), size=(1,))
-    return mask.cumsum(dim=0)[idx]
+    indices = torch.nonzero(mask)
+    idx = torch.randint(high=len(indices), size=(1,))
+    return indices[idx]
 
 def __get_neighbors(
         X: Tensor,
