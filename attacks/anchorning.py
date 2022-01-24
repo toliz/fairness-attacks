@@ -142,7 +142,7 @@ def __generate_perturbed_points(
     mean = torch.zeros_like(x_target)
     cov = 2 * torch.eye(len(mean)) * tau**2
     if tau > 0:
-        multivariate = MultivariateNormal(mean, cov * 0.02)
+        multivariate = MultivariateNormal(mean, cov * 0.01)
 
     idx = 0
     while True:
