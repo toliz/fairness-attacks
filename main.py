@@ -44,7 +44,7 @@ def create_poisoned_dataset(
             gpus=1 if torch.cuda.is_available() else 0,
             enable_model_summary=False,
             enable_progress_bar=False,
-            callbacks=[EarlyStopping(monitor="train_loss", mode="min", patience=10)]
+            callbacks=[EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
         
         poisoned_dataset = influence_attack(
@@ -102,7 +102,7 @@ def main(args: argparse.Namespace):
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             logger=wandb_logger,
-            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_loss", mode="min", patience=10)]
+            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
         
         # Poison the training set
