@@ -22,43 +22,48 @@ def anchoring_attack(
 ) -> Dataset:
     x_target = dict.fromkeys(['pos', 'neg'])
 
-    for _ in range(attack_iters):
-        # Sample positive and negative x_target
-        x_target['pos'], x_target['neg'] = __sample(D_c, sampling_method)
-        
-        # Calculate number of advantaged and disadvantaged points to generate
-        N_p, N_n = int(eps * D_c.get_positive_count()), int(eps * D_c.get_negative_count())
-        
-        # Generate positive poisoned points (x+, +1) with D_a in the close vicinity of x_target['pos']
-        G_plus = __generate_perturbed_points(
-            x_target=x_target['pos'],
-            is_positive=True,
-            is_advantaged=False,
-            sensitive_idx=sensitive_idx,
-            tau=tau,
-            n_perturbed=N_n
-        )
-        
-        # Generate negative poisoned points (x-, -1) with D_d in the close vicinity of x_target['neg']
-        G_minus = __generate_perturbed_points(
-            x_target=x_target['neg'],
-            is_positive=False,
-            is_advantaged=True,
-            sensitive_idx=sensitive_idx,
-            tau=tau,
-            n_perturbed=N_p
-        )
-        
-        # Load D_p from the generated data above
-        D_p = ConcatDataset([G_plus, G_minus])
-        
-        # Load the feasible F_β ← B(D_c U D_p)
-        poisoned_train = ConcatDataset([D_c, D_p])
-        beta = get_defense_params(poisoned_train)
-        minimization_problem = get_minimization_problem(poisoned_train)
+    # Calculate number of advantaged and disadvantaged points to generate
+    N_p, N_n = int(eps * D_c.get_positive_count()), int(eps * D_c.get_negative_count())
+    
+    if N_p > 0 or N_n > 0:
+        for _ in range(attack_iters):
+            # Sample positive and negative x_target
+            x_target['pos'], x_target['neg'] = __sample(D_c, sampling_method)
+            
+            
+            
+            # Generate positive poisoned points (x+, +1) with D_a in the close vicinity of x_target['pos']
+            G_plus = __generate_perturbed_points(
+                x_target=x_target['pos'],
+                is_positive=True,
+                is_advantaged=False,
+                sensitive_idx=sensitive_idx,
+                tau=tau,
+                n_perturbed=N_n
+            )
+            
+            # Generate negative poisoned points (x-, -1) with D_d in the close vicinity of x_target['neg']
+            G_minus = __generate_perturbed_points(
+                x_target=x_target['neg'],
+                is_positive=False,
+                is_advantaged=True,
+                sensitive_idx=sensitive_idx,
+                tau=tau,
+                n_perturbed=N_p
+            )
+            
+            # Load D_p from the generated data above
+            D_p = ConcatDataset([G_plus, G_minus])
+            
+            # Load the feasible F_β ← B(D_c U D_p)
+            poisoned_train = ConcatDataset([D_c, D_p])
+            beta = get_defense_params(poisoned_train)
+            minimization_problem = get_minimization_problem(poisoned_train)
 
-        # Project all poisoned points back to the feasible set
-        D_p = project_fn(D_p, beta, minimization_problem)
+            # Project all poisoned points back to the feasible set
+            D_p = project_fn(D_p, beta, minimization_problem)
+    else:
+        D_p = Dataset(torch.Tensor([]), torch.IntTensor([]), torch.BoolTensor([]))
 
     return D_p
 

@@ -43,31 +43,34 @@ def influence_attack(
     # Calculate number of advantaged and disadvantaged points to generate
     N_a, N_d = int(eps * len(D_a)), int(eps * len(D_d))
     
-    # Load ε|D_c| poisoned copies in the poisoned dataset D_p
-    D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
-    
-    # Load feasible set by applying anomaly detector B
-    beta = get_defense_params(ConcatDataset([D_c, D_p]))
-    
-    # Gradient ascent using Expectation-Maximization
-    for _ in range(attack_iters):
-        # θ ← argminθ L(θ; B(D_c ∪ D_p)) - original author forgot to apply "B"?
-        D_train = defense_fn(ConcatDataset([D_c, D_p]), beta)
-        train_dataloader = DataLoader(D_train, batch_size=datamodule.batch_size, shuffle=True, num_workers=4)
-        trainer.fit(model, train_dataloader)
-        
-        # Precompute g_θ (H inverse is too expensive for analytical computation)
-        g_theta = __compute_g_theta(model, D_test, adv_loss)
-        minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
-        for i, c in enumerate(['neg', 'pos']):
-            x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[c], y_adv[c]))
-            x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
-
-        # Update D_p
+    if N_a > 0 or N_d > 0:
+        # Load ε|D_c| poisoned copies in the poisoned dataset D_p
         D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
         
-        # Update feasible set
+        # Load feasible set by applying anomaly detector B
         beta = get_defense_params(ConcatDataset([D_c, D_p]))
+        
+        # Gradient ascent using Expectation-Maximization
+        for _ in range(attack_iters):
+            # θ ← argminθ L(θ; B(D_c ∪ D_p)) - original author forgot to apply "B"?
+            D_train = defense_fn(ConcatDataset([D_c, D_p]), beta)
+            train_dataloader = DataLoader(D_train, batch_size=datamodule.batch_size, shuffle=True, num_workers=4)
+            trainer.fit(model, train_dataloader)
+            
+            # Precompute g_θ (H inverse is too expensive for analytical computation)
+            g_theta = __compute_g_theta(model, D_test, adv_loss)
+            minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
+            for i, c in enumerate(['neg', 'pos']):
+                x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[c], y_adv[c]))
+                x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
+
+            # Update D_p
+            D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
+
+            # Update feasible set
+            beta = get_defense_params(ConcatDataset([D_c, D_p]))
+    else:
+        D_p = Dataset(torch.Tensor([]), torch.IntTensor([]), torch.BoolTensor([]))
         
     return D_p
 
