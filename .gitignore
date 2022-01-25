@@ -175,3 +175,6 @@ None/
 data/
 *.npz
 *.csv
+
+# PyTorch Lighting's logs
+lightning_logs/
