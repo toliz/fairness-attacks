@@ -55,6 +55,10 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
 
     def get_input_size(self) -> Tuple:
         return tuple(self.train_data[0][0].shape)
+    
+    @abstractmethod
+    def get_dataset_name(self) -> str:
+        raise NotImplementedError()
 
     @abstractmethod
     def get_target_file_name(self) -> str:
