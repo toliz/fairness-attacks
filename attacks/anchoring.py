@@ -93,24 +93,25 @@ def __get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
 def __get_neighbors(
         X: Tensor,
         mask: torch.BoolTensor,
-        distance_threshold: float = 3,
-        distance_type: str = 'euclidian'
+        distance_threshold: float = 7,
+        distance_type: str = 'euclidean'
 ) -> Tensor:
     neighbor_counts = torch.zeros(len(X))
+    distance_threshold = torch.quantile(__get_distances(X[mask].mean(axis=0), X[mask], distance_type), 0.2)
 
-    for idx in mask.cumsum(dim=0):
+    for idx in torch.where(mask)[0]:
         distances = __get_distances(X[idx], X[mask], distance_type)
         neighbors = torch.where(distances < distance_threshold)
         neighbor_counts[idx] = len(neighbors[0]) # neighbors is shape (count,)
 
     return neighbor_counts
 
-def __get_distances(x_target: Tensor, X: Tensor, distance_type: str = 'euclidian') -> Tensor:
+def __get_distances(x_target: Tensor, X: Tensor, distance_type: str = 'euclidean') -> Tensor:
     differences = X - x_target
 
-    if distance_type == 'manhattan':
+    if distance_type == 'euclidean':
         return differences.norm(dim=1)
-    elif distance_type == 'euclidian':
+    elif distance_type == 'manhattan':
         return differences.abs().sum(dim=1)
 
     raise NotImplementedError(f'Distance {distance_type} not implemented.')
@@ -148,7 +149,7 @@ def __generate_perturbed_points(
             continue
         else:
             points[idx] = x_adversarial
-            targets[idx] = int(not is_positive)
+            targets[idx] = int(is_positive)
             adv_mask[idx] = is_advantaged
             idx += 1
 

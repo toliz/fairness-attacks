@@ -113,6 +113,25 @@ def main(args: argparse.Namespace):
         # Train
         trainer.fit(model, dm)
         
+        ### NEW CODE ###
+        import pandas as pd
+        
+        from aif360.sklearn.metrics import equal_opportunity_difference as eod
+        from vrwmiara import get_fairness_measures
+        
+        # Get predictions
+        logits = model(dm.get_test_dataset().X)
+        preds = model.get_predictions(logits)
+        
+        # Vrwmiara measures
+        get_fairness_measures(dm.get_test_dataset(), preds)
+
+        # AIF360 measures
+        y = pd.DataFrame({'credit_score': dm.get_test_dataset().Y, 'sex': dm.get_test_dataset().adv_mask}).set_index(['sex'])
+        print('AIF360 - EOD: {}'.format(eod(y, preds, prot_attr='sex', priv_group=1, pos_label=1)))
+        
+        ### END OF NEW CODE ###
+        
         # Test
         test_results.append(*trainer.test(model, dm))
         wandb.finish()
