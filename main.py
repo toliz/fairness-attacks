@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='RAA',
+                        default='NRAA',
                         type=str,
                         choices=['None', 'IAF', 'RAA', 'NRAA'],
                         help='Attack to use')
