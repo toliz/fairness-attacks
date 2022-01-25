@@ -1,5 +1,0 @@
-input_size: !!python/tuple
-- 58
-lr: 0.001
-model: LogisticRegression
-weight_decay: 0.09
