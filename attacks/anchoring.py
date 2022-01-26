@@ -110,6 +110,8 @@ def __sample(dataset: Dataset, sampling_method: str) -> Tuple[Tensor, Tensor]:
         neg_idx = neg_neighbors.argmax()
         pos_idx = pos_neighbors.argmax()
         print(f'Time to find neighbors: {time.time() - start}')
+        print(f'Most positive advantaged neighbors: {max(pos_neighbors)}, mean: {pos_neighbors[pos_disadv_mask].mean()}')
+        print(f'Negative disadvantaged neighbors: {max(neg_neighbors)}, mean: {neg_neighbors[neg_adv_mask].mean()}')
     return dataset.X[neg_idx].squeeze(), dataset.X[pos_idx].squeeze()
 
 def __get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
@@ -139,7 +141,7 @@ def __get_neighbors(
     if not distance_threshold:
         # Calculate the distance threshold based on the threshold such that 25% of points
         # are within the threshold.
-        distance_threshold = torch.quantile(__get_distances(X[mask].mean(axis=0), X[mask]), 0.25)
+        distance_threshold = torch.quantile(__get_distances(X[mask].mean(axis=0), X[mask]), 0.15)
     neighbor_counts = torch.zeros(len(X))
     # For each point in X, count the number of points in X that are within the distance threshold
     for idx in torch.where(mask)[0]:

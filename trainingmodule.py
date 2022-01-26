@@ -6,6 +6,7 @@ from torch import Tensor
 from models.logistric_regression import LogisticRegression
 from fairness import SPD, EOD
 from torchmetrics import Accuracy
+from collections import OrderedDict
 
 
 class BinaryClassifier(pl.LightningModule):
@@ -47,8 +48,19 @@ class BinaryClassifier(pl.LightningModule):
         # Log metrics
         self.log('train_loss', loss, on_step=False, on_epoch=True)
         self.log('train_acc', acc, on_step=False, on_epoch=True)
+        tqdm_dict = {'train_loss': loss.item(),
+                                 'train_acc': acc.item(),
+                                 'train_err': 1 - acc.item()}
+        
+        output = OrderedDict({
+            'loss': loss,
+            'train_error': 1 - acc.item(),
+            'train_acc': acc.item(),
+            'progress_bar': tqdm_dict,
+            'log': tqdm_dict
+        })
 
-        return loss
+        return output
     
     def test_step(self, batch, batch_idx) -> dict:
         # Forward pass
