@@ -35,7 +35,7 @@ class BinaryClassifier(pl.LightningModule):
     def forward(self, x: Tensor) -> Tensor:
         return self.linear(x)
 
-    def training_step(self, batch, batch_idx) -> Tensor:
+    def training_step(self, batch, batch_idx) -> OrderedDict:
         # Forward pass
         x, y, _ = batch
         logits = self(x)
@@ -61,27 +61,29 @@ class BinaryClassifier(pl.LightningModule):
         })
 
         return output
-    
+
     def test_step(self, batch, batch_idx) -> dict:
-        # Forward pass
         x, y, adv_mask = batch
         logits = self(x)
+
+        return {'logits': logits, 'y': y, 'adv_mask': adv_mask}
+
+    def test_epoch_end(self, outputs) -> dict:
+        y = torch.cat([subdict['y'] for subdict in outputs])
+        logits = torch.cat([subdict['logits'] for subdict in outputs])
+        adv_mask = torch.cat([subdict['adv_mask'] for subdict in outputs])
         predicts = self.get_predictions(logits)
 
-        # Metrics
         spd = self.spd(predicts, adv_mask)
         eod = self.eod(predicts, y, adv_mask)
         loss = self.loss(logits, y.float())
         acc = self.acc(predicts, y)
 
-        # Log metrics
-        # self.log('test_loss', loss, on_step=False, on_epoch=True)
-        # self.log('test_acc', acc, on_step=False, on_epoch=True)
         self.log('test_error', 1 - acc, on_step=False, on_epoch=True)
         self.log('EOD', eod, on_step=False, on_epoch=True)
         self.log('SPD', spd, on_step=False, on_epoch=True)
 
-        return { 'loss': loss, 'test_error': 1 - acc, 'EOD': eod, 'SPD': spd }
+        return {'loss': loss, 'test_error': 1 - acc, 'EOD': eod, 'SPD': spd}
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
