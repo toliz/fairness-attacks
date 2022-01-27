@@ -111,7 +111,7 @@ def main(args: argparse.Namespace):
         )
         
         # Poison the training set
-        if args.attack != 'None':
+        if args.attack != 'None' and args.eps > 0:
             poisoned_dataset = create_poisoned_dataset(args, dm, model)
             dm.update_train_dataset(poisoned_dataset)
             
