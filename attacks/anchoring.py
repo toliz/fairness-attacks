@@ -8,6 +8,8 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 from attacks.utils import get_defense_params, get_minimization_problem, project_dataset
 from datamodules import ConcatDataset, Dataset
 
+import scipy
+
 
 def anchoring_attack(
     D_c: Dataset,
@@ -16,6 +18,8 @@ def anchoring_attack(
     tau: float,
     sampling_method: str,
     attack_iters: int,
+    distance_norm: str = 'l1',
+    distances_type: str = 'exp',
     project_fn: Callable = project_dataset,
     get_defense_params: Callable = get_defense_params,
     get_minimization_problem: Callable = get_minimization_problem,
@@ -39,7 +43,7 @@ def anchoring_attack(
 
     for _ in range(attack_iters):
         # Sample positive and negative x_target
-        x_target['pos'], x_target['neg'] = __sample(D_c, sampling_method)
+        x_target['pos'], x_target['neg'] = __sample(D_c, sampling_method, distance_norm=distance_norm, distances_type=distances_type)
         
         # Calculate number of advantaged and disadvantaged points to generate
         N_p, N_n = int(eps * D_c.get_positive_count()), int(eps * D_c.get_negative_count())
@@ -79,7 +83,7 @@ def anchoring_attack(
     return D_p
 
 
-def __sample(dataset: Dataset, sampling_method: str) -> Tuple[Tensor, Tensor]:
+def __sample(dataset: Dataset, sampling_method: str, distances_type: str = 'exp', distance_norm: str = 'l1') -> Tuple[Tensor, Tensor]:
     """
     Sample positive and negative x_target.
     :param dataset: Dataset to sample from.
@@ -101,17 +105,47 @@ def __sample(dataset: Dataset, sampling_method: str) -> Tuple[Tensor, Tensor]:
         neg_idx = __get_random_index_from_mask(neg_adv_mask)
         pos_idx = __get_random_index_from_mask(pos_disadv_mask)
     else:
-        import time
-        start = time.time()
-        distances = torch.tensor(compute_distances(dataset.X, dataset.X))
-        neg_neighbors = __get_neighbors(dataset.X, neg_adv_mask, distances=distances)
-        pos_neighbors = __get_neighbors(dataset.X, pos_disadv_mask, distances=distances)
+        # translate distances_norm to scipy distance type
+        distance_norm_scipy = 'cityblock' if distance_norm == 'l1' else 'euclidean'
+        # compute distances
+        distances = torch.tensor(scipy.spatial.distance.cdist(dataset.X, dataset.X, metric=distance_norm_scipy))
+        if distances_type == 'exp':
+            """
+            The most popular point is the point with the largest sum of
+            of exponentially decayed distances normalized by the variance
+            of the distances.
+            x_most_pop = argmax_x sum_i exp(-d(x, x_i) / sigma^2)
+            """
+            # Compute the distances for the negative_adv_mask. (distances are symmetric NxN, so we need to filter with the mask twice)
+            distances_neg = distances[neg_adv_mask].T[neg_adv_mask]
+            # Compute the distances for the positive_disadv_mask. (distances are symmetric NxN, so we need to filter with the mask twice)
+            distances_pos = distances[pos_disadv_mask].T[pos_disadv_mask]
+            # Calculate the mean and variances of the distances.
+            distances_neg_mean, distances_neg_var = distances_neg.mean(), distances_neg.var()
+            distances_pos_mean, distances_pos_var = distances_pos.mean(), distances_pos.var()
+            # Calculate exp(-(distance_jk / distances_jk_var)) for all (j, k) in {(neg, adv), (pos, disadv)}
+            exp_distances_neg = torch.exp(-distances_neg / distances_neg_var)
+            exp_distances_pos = torch.exp(-distances_pos / distances_pos_var)
+            # Find the point with the largest sum of exp(-(distance_jk / distances_jk_var)) for all (j, k) in {(neg, adv), (pos, disadv)}
+            neg_idx_in_mask = torch.argmax((exp_distances_neg).sum(dim=0))
+            pos_idx_in_mask = torch.argmax((exp_distances_pos).sum(dim=0))
+            # Translate the index in the mask to the index in the dataset. 
+            neg_idx = neg_adv_mask.nonzero().squeeze(1)[neg_idx_in_mask]
+            pos_idx = pos_disadv_mask.nonzero().squeeze(1)[pos_idx_in_mask]
+        else:
+            """
+            The most popular point is the point with the most number of
+            number of neighbors in the dataset. Neighbors are defined as the
+            points in the dataset that are within a distance of
+            distance_threshold σ. The distance threshold is set to the
+            radius from the center needed to enclose 15% of the dataset.
+            """
+            # Compute the neighbors based on the 15% cutoff as described in the paper
+            neg_neighbors = __get_neighbors(dataset.X, neg_adv_mask, distances=distances, distance_norm=distance_norm)
+            pos_neighbors = __get_neighbors(dataset.X, pos_disadv_mask, distances=distances, distance_norm=distance_norm)
+            neg_idx = neg_neighbors.argmax()
+            pos_idx = pos_neighbors.argmax()
 
-        neg_idx = neg_neighbors.argmax()
-        pos_idx = pos_neighbors.argmax()
-        print(f'Time to find neighbors: {time.time() - start}')
-        print(f'Most positive advantaged neighbors: {max(pos_neighbors)}, mean: {pos_neighbors[pos_disadv_mask].mean()}')
-        print(f'Negative disadvantaged neighbors: {max(neg_neighbors)}, mean: {neg_neighbors[neg_adv_mask].mean()}')
     return dataset.X[neg_idx].squeeze(), dataset.X[pos_idx].squeeze()
 
 def __get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
@@ -129,6 +163,7 @@ def __get_neighbors(
         mask: torch.BoolTensor,
         distances: Tensor = None,
         distance_threshold: float = None,
+        distance_norm: str = 'l1'
 ) -> Tensor:
     """
     Get the neighbors of the points in X that are in the mask.
@@ -141,14 +176,14 @@ def __get_neighbors(
     if not distance_threshold:
         # Calculate the distance threshold based on the threshold such that 25% of points
         # are within the threshold.
-        distance_threshold = torch.quantile(__get_distances(X[mask].mean(axis=0), X[mask]), 0.15)
+        distance_threshold = torch.quantile(__get_distances(X[mask].mean(axis=0), X[mask], distance_norm=distance_norm), 0.15)
     neighbor_counts = torch.zeros(len(X))
     # For each point in X, count the number of points in X that are within the distance threshold
     for idx in torch.where(mask)[0]:
-        neighbor_counts[idx] = (distances[idx] < distance_threshold).sum()
+        neighbor_counts[idx] = (distances[idx][mask] < distance_threshold).sum()
     return neighbor_counts
 
-def __get_distances(x_target: Tensor, X: Tensor, distance_type: str = 'euclidean') -> Tensor:
+def __get_distances(x_target: Tensor, X: Tensor, distance_norm: str = 'euclidean') -> Tensor:
     """
     Get the distances between x_target and X.
     :param x_target: Target point.
@@ -160,12 +195,12 @@ def __get_distances(x_target: Tensor, X: Tensor, distance_type: str = 'euclidean
     """
     differences = X - x_target
 
-    if distance_type == 'euclidean':
+    if distance_norm == 'euclidean' or distance_norm == 'l2':
         return differences.norm(dim=1)
-    elif distance_type == 'manhattan':
+    elif distance_norm == 'manhattan' or distance_norm == 'l1':
         return differences.abs().sum(dim=1)
 
-    raise NotImplementedError(f'Distance {distance_type} not implemented.')
+    raise NotImplementedError(f'Distance {distance_norm} not implemented.')
 
 def __generate_perturbed_points(
     x_target: Tensor,

@@ -69,6 +69,8 @@ def create_poisoned_dataset(
             tau=args.tau,
             sampling_method='random' if args.attack == 'RAA' else 'non-random',
             attack_iters=args.attack_iters,
+            distance_norm=args.distance_norm,
+            distances_type=args.distances_type,
         )
     else:
         raise ValueError(f'Unknown attack {args.attack}.')
@@ -192,6 +194,16 @@ if __name__ == '__main__':
                         default=100,
                         type=int,
                         help='Attack iterations')
+    parser.add_argument('--distance_norm',
+                        default='l1',
+                        type=str,
+                        choices=['l1', 'l2'],
+                        help='Distance norm to use')
+    parser.add_argument('--distances_type',
+                        default='exp',
+                        type=str,
+                        choices=['exp', 'percentile'],
+                        help='Distance type to use')
 
     # Anchoring Attack
     parser.add_argument('--tau',
