@@ -43,26 +43,27 @@ def anchoring_attack(
         
         # Calculate number of advantaged and disadvantaged points to generate
         N_p, N_n = int(eps * D_c.get_positive_count()), int(eps * D_c.get_negative_count())
-        
-        # Generate positive poisoned points (x+, +1) with D_a in the close vicinity of x_target['pos']
+
+        # Generate positive poisoned points (x-, +1) with D_a in the close vicinity of x_target['neg']
         G_plus = __generate_perturbed_points(
-            x_target=x_target['pos'],
+            x_target=x_target['neg'],
             is_positive=True,
-            is_advantaged=False,
+            is_advantaged=True,
             sensitive_idx=sensitive_idx,
             tau=tau,
             n_perturbed=N_n
         )
-        
-        # Generate negative poisoned points (x-, -1) with D_d in the close vicinity of x_target['neg']
+
+        # Generate negative poisoned points (x+, -1) with D_d in the close vicinity of x_target['pos']
         G_minus = __generate_perturbed_points(
-            x_target=x_target['neg'],
+            x_target=x_target['pos'],
             is_positive=False,
-            is_advantaged=True,
+            is_advantaged=False,
             sensitive_idx=sensitive_idx,
             tau=tau,
             n_perturbed=N_p
         )
+
         
         # Load D_p from the generated data above
         D_p = ConcatDataset([G_plus, G_minus])
