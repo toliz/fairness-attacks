@@ -89,7 +89,7 @@ def __sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
     neg_disadv_idx = neg_disadv_indices[neg_disadv_choice]
 
     # Return x_pos_adv, x_neg_disadv
-    return dataset.X[pos_adv_idx], dataset.X[neg_disadv_idx]
+    return dataset.X[pos_adv_idx].squeeze(), dataset.X[neg_disadv_idx].squeeze()
 
 
 def __build_dataset_from_points(
