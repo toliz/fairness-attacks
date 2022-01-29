@@ -27,25 +27,21 @@ def influence_attack(
     get_minimization_problem: Callable = get_minimization_problem,
 ) -> Dataset:
     model = deepcopy(model) # copy model so the one passed as argument doesn't change
-    
+
     x_adv, y_adv = dict.fromkeys(['pos', 'neg']), dict.fromkeys(['pos', 'neg'])
     
     D_c, D_test = datamodule.get_train_dataset(), datamodule.get_test_dataset()
     
-    # Extract advantaged and disadvantaged groups as Datasets
-    D_a, D_d = D_c.get_advantaged_subset(), D_c.get_disadvantaged_subset()
+    # Randomly sample the positive and negative poisoned instances
+    x_adv['pos'], x_adv['neg'] = __sample(D_c)
+    y_adv['pos'], y_adv['neg'] = 1, 0
     
-    # From D_a randomly sample the positive poisoned instance
-    x_adv['pos'], y_adv['pos'], _ = D_a.sample()
-    # From D_d randomly sample the negative poisoned instance
-    x_adv['neg'], y_adv['neg'], _ = D_d.sample()
+    # Calculate number of positive and negative copies to generate
+    N_p, N_n = int(eps * D_c.get_negative_count()), int(eps * D_c.get_positive_count())
     
-    # Calculate number of advantaged and disadvantaged points to generate
-    N_a, N_d = int(eps * len(D_a)), int(eps * len(D_d))
-    
-    if N_a > 0 or N_d > 0:
+    if N_p > 0 or N_n > 0:
         # Load ε|D_c| poisoned copies in the poisoned dataset D_p
-        D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
+        D_p = __build_dataset_from_points(x_adv, y_adv, N_p, N_n)
         
         # Load feasible set by applying anomaly detector B
         beta = get_defense_params(ConcatDataset([D_c, D_p]))
@@ -65,7 +61,7 @@ def influence_attack(
                 x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
 
             # Update D_p
-            D_p = __build_dataset_from_points(x_adv, y_adv, N_a, N_d)
+            D_p = __build_dataset_from_points(x_adv, y_adv, N_p, N_n)
 
             # Update feasible set
             beta = get_defense_params(ConcatDataset([D_c, D_p]))
@@ -75,16 +71,37 @@ def influence_attack(
     return D_p
 
 
+def __sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
+    # Calculate the masks for (positive, advantaged) and (negative, disadvantaged) points
+    pos_adv_mask = torch.logical_and(dataset.Y.bool(), dataset.adv_mask)
+    neg_disadv_mask = torch.logical_and(~dataset.Y.bool(), ~dataset.adv_mask)
+
+    # Convert masks to indices
+    pos_adv_indices = torch.where(pos_adv_mask)[0]
+    neg_disadv_indices = torch.where(neg_disadv_mask)[0]
+
+    # Choose a random element position for each index tensor
+    pos_adv_choice = torch.randint(len(pos_adv_indices), size=(1,))
+    neg_disadv_choice = torch.randint(len(neg_disadv_indices), size=(1,))
+
+    # Get element (index) at specified position
+    pos_adv_idx = pos_adv_indices[pos_adv_choice]
+    neg_disadv_idx = neg_disadv_indices[neg_disadv_choice]
+
+    # Return x_pos_adv, x_neg_disadv
+    return dataset.X[pos_adv_idx], dataset.X[neg_disadv_idx]
+
+
 def __build_dataset_from_points(
     x_adv: Dict[str, Tensor],
     y_adv: Dict[str, Tensor],
-    adv_copies: int,
-    disadv_copies: int
+    pos_copies: int,
+    neg_copies: int
 ) -> Dataset:
     return Dataset(
-            X = torch.stack([x_adv['pos']] * adv_copies + [x_adv['neg']] * disadv_copies),
-            Y = torch.IntTensor([y_adv['pos']] * adv_copies + [y_adv['neg']] * disadv_copies),
-            adv_mask = torch.BoolTensor([1] * adv_copies + [0] * disadv_copies),
+            X = torch.stack([x_adv['pos']] * pos_copies + [x_adv['neg']] * neg_copies),
+            Y = torch.IntTensor([y_adv['pos']] * pos_copies + [y_adv['neg']] * neg_copies),
+            adv_mask = torch.BoolTensor([1] * pos_copies + [0] * neg_copies),
         )
 
 
