@@ -2,6 +2,7 @@ import os
 from abc import abstractmethod, ABCMeta
 from typing import Optional, Tuple
 from urllib.request import urlretrieve
+from sklearn.model_selection import train_test_split
 
 import numpy as np
 import pytorch_lightning as pl
@@ -39,11 +40,20 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
         x_train, x_test = torch.tensor(npz['X_train']).float(), torch.tensor(npz['X_test']).float()
         y_train, y_test = torch.tensor(npz['Y_train']).int(), torch.tensor(npz['Y_test']).int()
 
+        # split train-validation
+        x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.2, shuffle=True)
+
         if stage in (None, 'fit'):
             self.train_data = Dataset(
                 X=x_train,
                 Y=y_train,
                 adv_mask=self.get_advantaged_mask(x_train)
+            )
+
+            self.valid_data = Dataset(
+                X=x_valid,
+                Y=y_valid,
+                adv_mask=self.get_advantaged_mask(x_valid)
             )
 
         if stage in (None, 'test'):
@@ -80,6 +90,9 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.train_data, self.batch_size, shuffle=True, drop_last=True, num_workers=4)
+
+    def val_dataloader(self):
+        return DataLoader(self.valid_data, self.batch_size, num_workers=4)
 
     def test_dataloader(self) -> DataLoader:
         return DataLoader(self.test_data, self.batch_size, num_workers=4)

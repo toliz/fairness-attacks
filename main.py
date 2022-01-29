@@ -102,12 +102,12 @@ def main(args: argparse.Namespace):
             raise ValueError(f'Unknown dataset {args.dataset}.')
         
         model = BinaryClassifier(args.model, dm.get_input_size(), lr=1e-3)
-        
+
         trainer = pl.Trainer(
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             logger=wandb_logger,
-            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_acc", mode="max", patience=10)]
+            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="val_loss", mode="min", patience=10)]
         )
         
         # Poison the training set
