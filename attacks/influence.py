@@ -34,7 +34,7 @@ def influence_attack(
     
     # Randomly sample the positive and negative poisoned instances
     x_adv['pos'], x_adv['neg'] = _sample(D_c)
-    y_adv['pos'], y_adv['neg'] = torch.tensor(1, dtype=int), torch.tensor(0, dtype=int)
+    y_adv['pos'], y_adv['neg'] = torch.tensor(1, dtype=torch.int), torch.tensor(0, dtype=torch.int)
     
     # Calculate number of positive and negative copies to generate
     N_p, N_n = int(eps * D_c.get_negative_count()), int(eps * D_c.get_positive_count())
@@ -43,28 +43,31 @@ def influence_attack(
         # Load ε|D_c| poisoned copies in the poisoned dataset D_p
         D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
         
-        # Load feasible set by applying anomaly detector B
-        beta = get_defense_params(ConcatDataset([D_c, D_p]))
-        
         # Gradient ascent using Expectation-Maximization
         for _ in range(attack_iters):
-            # θ ← argminθ L(θ; B(D_c ∪ D_p)) - original author forgot to apply "B"?
-            D_train = defense_fn(ConcatDataset([D_c, D_p]), beta)
+            # Load feasible set params β from D_c ∪ D_p
+            D_train = ConcatDataset([D_c, D_p])
+            beta = get_defense_params(D_train)
+
+            # Apply anomaly detector B (original author forgot this step?)
+            D_train = defense_fn(D_train, beta)
+
+            # θ ← argmin_θ L(θ; B(D_c ∪ D_p))
             train_dataloader = DataLoader(D_train, batch_size=datamodule.batch_size, shuffle=True, num_workers=4)
             trainer.fit(model, train_dataloader)
             
             # Precompute g_θ (H inverse is too expensive for analytical computation)
             g_theta = _compute_g_theta(model, D_test, adv_loss)
-            minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
+            minimization_problem = get_minimization_problem(D_train)
+
+            # Update each adversarial point accordingly
             for i, c in enumerate(['neg', 'pos']):
-                x_adv[c] -= eta * g_theta @ _inverse_hvp(model, adv_loss, ConcatDataset([D_c, D_p]), (x_adv[c], y_adv[c], torch.tensor(i, dtype=bool)))
+                adv_point = (x_adv[c], y_adv[c], torch.tensor(i, dtype=torch.bool))
+                x_adv[c] -= eta * g_theta @ _inverse_hvp(model, adv_loss, D_train, adv_point) # step based on loss grads
                 x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
 
             # Update D_p
             D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
-
-            # Update feasible set
-            beta = get_defense_params(ConcatDataset([D_c, D_p]))
     else:
         D_p = Dataset(torch.Tensor([]), torch.IntTensor([]), torch.BoolTensor([]))
         
