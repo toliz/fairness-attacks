@@ -77,7 +77,6 @@ def create_poisoned_dataset(
             eps=args.eps,
             tau=args.tau,
             sampling_method='random' if args.attack == 'RAA' else 'non-random',
-            attack_iters=args.attack_iters,
             distance_norm=args.distance_norm,
             distances_type=args.distances_type,
         )
