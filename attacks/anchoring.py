@@ -43,7 +43,8 @@ def anchoring_attack(
 
     for _ in range(attack_iters):
         # Sample positive and negative x_target
-        x_target['pos'], x_target['neg'] = __sample(D_c, sampling_method, distance_norm=distance_norm, distances_type=distances_type)
+        x_target['neg'], x_target['pos'] = __sample(D_c, sampling_method, distance_norm=distance_norm,
+                                                     distances_type=distances_type)
         
         # Calculate number of advantaged and disadvantaged points to generate
         N_p, N_n = int(eps * D_c.get_positive_count()), int(eps * D_c.get_negative_count())
