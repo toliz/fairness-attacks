@@ -168,7 +168,7 @@ def _get_neighbors(
     :return: Indices of the neighbors.
     """
     if not distance_threshold:
-        # Calculate the distance threshold based on the threshold such that 25% of points
+        # Calculate the distance threshold based on the threshold such that 15% of points
         # are within the threshold.
         distance_threshold = torch.quantile(_get_distances(X[mask].mean(axis=0), X[mask], distance_norm=distance_norm), 0.15)
     neighbor_counts = torch.zeros(len(X))

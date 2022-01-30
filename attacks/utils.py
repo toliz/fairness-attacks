@@ -96,7 +96,10 @@ def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
     :param dataset: Dataset
     :return: Minimization problem
     """
-    X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    if type(dataset.X) is torch.Tensor:
+        X = dataset.X.detach().clone().numpy()
+    else:
+        X = dataset.X
     # Build the minimization problem
     """
     Quick recap of cvxpy:
@@ -164,8 +167,7 @@ def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
     for k in range(1, k_max + 1):
         # Create mask for features with max value k
         X_k_max = k <= X_max
-        # TODO: Find why we chose magic value 11
-        if k < 11:
+        if any(X_k_max):
             cvx_constraints.append(
                 cvx_expected_value[X_k_max] >= cvx_x[X_k_max] *
                 (2 * k - 1) - k * (k - 1))
@@ -203,7 +205,11 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
     :param beta: Dictionary of beta values for the feasible set
     :return: Pruned dataset = (D_c \cup D_p) \cap F_b
     """
-    X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    if type(dataset.X) is torch.Tensor:
+        X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    else:
+        X, y = dataset.X, dataset.Y
+
     classes = set(list(y))
     sphere_radii = beta['sphere_radii']
     slab_radii = beta['slab_radii']
@@ -240,8 +246,11 @@ def get_defense_params(dataset: Dataset) -> dict:
     :return: dictionary of parameters
     """
     PERCENTILE = 90
-    X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-    classes = set(list(y.numpy()))
+    if type(dataset.X) is torch.Tensor:
+        X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    else:
+        X, y = dataset.X, dataset.Y
+    classes = set(list(y))
     centroids = get_centroids(dataset=dataset)
     centroid_vec = get_centroid_vec(centroids=centroids)
     sphere_radii = dict()
@@ -269,11 +278,14 @@ def get_centroids(dataset: Dataset) -> dict:
     :return: dictionary of centroids with class as key
     and centroid as value
     """
-    X, y = dataset.X.detach().clone(), dataset.Y.detach().clone()
-    classes = set(list(y.numpy()))
+    if type(dataset.X) is torch.Tensor:
+        X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
+    else:
+        X, y = dataset.X, dataset.Y
+    classes = set(list(y))
     centroids = dict()
     for c in classes:
-        centroids[c] = np.mean(X[y == c].detach().cpu().numpy(), axis=0)
+        centroids[c] = np.mean(X[y == c], axis=0)
     return centroids
 
 

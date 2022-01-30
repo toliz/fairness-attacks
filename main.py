@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
     # Attacks
     parser.add_argument('--attack',
-                        default='NRAA',
+                        default='IAF',
                         type=str,
                         choices=['None', 'IAF', 'RAA', 'NRAA', 'Koh', 'Solans'],
                         help='Attack to use')
