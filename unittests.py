@@ -63,7 +63,7 @@ class AnchoringTest(AttackTest):
         self.assert_demographics(neg_adv_idx, pos_disadv_idx)
 
     def test_sampling_non_random(self):
-        x_neg_adv, x_pos_disadv = anchoring._sample(self.dataset, 'non-random', distances_type='quantile')
+        x_neg_adv, x_pos_disadv = anchoring._sample(self.dataset, 'non-random', distances_type='percentile')
         neg_adv_idx = self.get_index(x_neg_adv, self.dataset.X)
         pos_disadv_idx = self.get_index(x_pos_disadv, self.dataset.X)
 
