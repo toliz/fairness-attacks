@@ -4,11 +4,9 @@ import logging
 import pytorch_lightning as pl
 import torch
 import utils
-import wandb
 
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import WandbLogger
 from torch.nn import BCEWithLogitsLoss
 
 from attacks import influence_attack, anchoring_attack
@@ -82,16 +80,6 @@ def main(args: argparse.Namespace):
     pl.seed_everything(123)
     test_results = []
     for run in range(args.num_runs):
-        # Set-up W&B logger
-        wandb_logger = WandbLogger()
-        wandb.init(
-            entity=args.wandb_user,
-            project=args.logger_project,
-            job_type='train',
-            name=utils.create_experiment_name(args) + f'run_{run}',
-            mode=args.logger_mode,
-            notes=args.logger_notes
-        )
 
         # Set-up PyTorch Lightning    
         if args.dataset == 'German_Credit':
@@ -108,7 +96,6 @@ def main(args: argparse.Namespace):
         trainer = pl.Trainer(
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
-            logger=wandb_logger,
             callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
         
@@ -122,29 +109,17 @@ def main(args: argparse.Namespace):
         
         # Test
         test_results.append(*trainer.test(model, dm))
-        wandb.finish()
     
     # Compute average results
     avg_results = utils.get_average_results(test_results, args.num_runs)
     avg_results['name'] = utils.create_experiment_name(args)
 
-    # write csv to memory
-    # TODO: reformat saving headers
+    # Write csv with the results to memory
     with open('results.csv', 'a') as file:
         w = csv.DictWriter(file, avg_results.keys())
         if file.tell() == 0:
             w.writeheader()
         w.writerow(avg_results)
-
-    # log results to wandb
-    if args.log_average_results:
-        wandb.init(entity=args.wandb_user,
-                   project=args.project,
-                   job_type='train',
-                   name='Average: ' + utils.create_experiment_name(args),
-                   notes=args.logger_notes)
-        wandb.log(avg_results)
-        wandb.finish()
 
 
 if __name__ == '__main__':
@@ -225,29 +200,6 @@ if __name__ == '__main__':
                         default=0.01,
                         type=float,
                         help='Step size for gradient update in influence attack')
-
-    # Logger
-    parser.add_argument('--logger_project',
-                        default='FACT_AI',
-                        type=str,
-                        help='Project name to save the logs')
-    parser.add_argument('--logger_notes',
-                        default='',
-                        type=str,
-                        help='Description of the experiment')
-    parser.add_argument('--logger_mode',
-                        default='disabled',
-                        type=str,
-                        choices=['online', 'offline', 'disabled'],
-                        help='Mode of logger')
-    parser.add_argument('--wandb_user',
-                        default='angelosnal',
-                        type=str,
-                        help='Wandb project owner username')
-    parser.add_argument('--log_average_results',
-                        default=False,
-                        type=bool,
-                        help='Log the average results from the runs')
 
     args = parser.parse_args()
 
