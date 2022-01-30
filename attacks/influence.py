@@ -33,7 +33,7 @@ def influence_attack(
     D_c, D_test = datamodule.get_train_dataset(), datamodule.get_test_dataset()
     
     # Randomly sample the positive and negative poisoned instances
-    x_adv['pos'], x_adv['neg'] = __sample(D_c)
+    x_adv['pos'], x_adv['neg'] = _sample(D_c)
     y_adv['pos'], y_adv['neg'] = torch.tensor(1, dtype=int), torch.tensor(0, dtype=int)
     
     # Calculate number of positive and negative copies to generate
@@ -41,7 +41,7 @@ def influence_attack(
     
     if N_p > 0 or N_n > 0:
         # Load ε|D_c| poisoned copies in the poisoned dataset D_p
-        D_p = __build_dataset_from_points(x_adv, y_adv, N_p, N_n)
+        D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
         
         # Load feasible set by applying anomaly detector B
         beta = get_defense_params(ConcatDataset([D_c, D_p]))
@@ -54,14 +54,14 @@ def influence_attack(
             trainer.fit(model, train_dataloader)
             
             # Precompute g_θ (H inverse is too expensive for analytical computation)
-            g_theta = __compute_g_theta(model, D_test, adv_loss)
+            g_theta = _compute_g_theta(model, D_test, adv_loss)
             minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
             for i, c in enumerate(['neg', 'pos']):
-                x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, ConcatDataset([D_c, D_p]), (x_adv[c], y_adv[c], torch.tensor(i, dtype=bool)))
+                x_adv[c] -= eta * g_theta @ _inverse_hvp(model, adv_loss, ConcatDataset([D_c, D_p]), (x_adv[c], y_adv[c], torch.tensor(i, dtype=bool)))
                 x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
 
             # Update D_p
-            D_p = __build_dataset_from_points(x_adv, y_adv, N_p, N_n)
+            D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
 
             # Update feasible set
             beta = get_defense_params(ConcatDataset([D_c, D_p]))
@@ -71,7 +71,7 @@ def influence_attack(
     return D_p
 
 
-def __sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
+def _sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
     # Calculate the masks for (positive, advantaged) and (negative, disadvantaged) points
     pos_adv_mask = torch.logical_and(dataset.Y.bool(), dataset.adv_mask)
     neg_disadv_mask = torch.logical_and(~dataset.Y.bool(), ~dataset.adv_mask)
@@ -92,7 +92,7 @@ def __sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
     return dataset.X[pos_adv_idx].squeeze(), dataset.X[neg_disadv_idx].squeeze()
 
 
-def __build_dataset_from_points(
+def _build_dataset_from_points(
     x_adv: Dict[str, Tensor],
     y_adv: Dict[str, Tensor],
     pos_copies: int,
@@ -105,7 +105,7 @@ def __build_dataset_from_points(
         )
 
 
-def __compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable) -> Tensor:
+def _compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable) -> Tensor:
     model.zero_grad() # zero gradients for safety
     
     # Accumulate model's gradients over dataset
@@ -115,17 +115,17 @@ def __compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable)
     return model.get_grads()
 
 
-def __inverse_hvp(
+def _inverse_hvp(
     model: BinaryClassifier,
     loss: Callable,
     dataset: Dataset,
     adverserial_point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
-    v = __loss_gradient_wrt_input_and_params(model, loss, adverserial_point)
-    return __compute_inverse_hvp(model, dataset, loss, v)
+    v = _loss_gradient_wrt_input_and_params(model, loss, adverserial_point)
+    return _compute_inverse_hvp(model, dataset, loss, v)
 
 
-def __loss_gradient_wrt_input_and_params(
+def _loss_gradient_wrt_input_and_params(
     model: BinaryClassifier,
     loss: Callable,
     point: Tuple[Tensor, IntTensor, BoolTensor]
@@ -141,17 +141,17 @@ def __loss_gradient_wrt_input_and_params(
                                                     # element. Then we squeeze to discard the batch dimension
     
     # L_second_grad dimensions: num_params x num_input_features
-    L_second_grad = torch.empty(__flatten(model.get_params()).shape + X.shape[1:])
+    L_second_grad = torch.empty(_flatten(model.get_params()).shape + X.shape[1:])
     
     # Gradient requires scalar inputs. So to derive the second order derivative we need to use grad on every scalar 
     # in the first gradient (L_first_grad). `torch.autograd.functional.jacobian` is supposed to make this simpler, but
     # it is still in beta, and in our experiments it did not return correct results.
     for i, dL_dXi in enumerate(L_first_grad):
-        L_second_grad[:, i] = __flatten(grad(dL_dXi, model.get_params(), create_graph=True))
+        L_second_grad[:, i] = _flatten(grad(dL_dXi, model.get_params(), create_graph=True))
         
     return L_second_grad
 
-def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Callable, v: Tensor) -> Tensor:
+def _compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Callable, v: Tensor) -> Tensor:
     """Efficiently computes a numeric approximation of the inverse Hessian Vector Product
     between the test loss of a model w.r.t the model's parameters and a vector v.
 
@@ -174,7 +174,7 @@ def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Calla
         
         # Iteratively update the estimate as H^{-1}@v <- v + (I - Hessian(L)) @ H^{-1}@v or
         # equivalently H^{-1}@v <- v + H^{-1}@v - hvp(L, H^{-1}@v), where L is the test loss
-        inverse_hvp_estimate += v - __compute_hvp(
+        inverse_hvp_estimate += v - _compute_hvp(
             current_batch_loss,
             model.get_params(),
             inverse_hvp_estimate
@@ -183,26 +183,26 @@ def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Calla
     return inverse_hvp_estimate
 
 
-def __compute_hvp(func: Callable, input: Union[Tensor, Tuple[Tensor]], v: Tensor) -> Tensor:
+def _compute_hvp(func: Callable, input: Union[Tensor, Tuple[Tensor]], v: Tensor) -> Tensor:
     hvp_columns = [] 
     
     # Iterate over columns of `v` with the same number of elements as `input`
     # TODO: check what happens if v has more than 2 dimensions (e.g. when we have image datasets)
     for v_column in v.T:
         # Reshape column to a tuple of tensors matching input
-        v_column = __unflatten(v_column, input)
+        v_column = _unflatten(v_column, input)
         
         # Calculate vhp for efficiency (since v is one-dimensional it's the same as hvp)
         _, hvp_column = vhp(func, input, v_column)
         
         # store hvp
-        hvp_columns.append(__flatten(hvp_column))
+        hvp_columns.append(_flatten(hvp_column))
     
     # vstack the hvp's to have shape as v (this is expected since hessian is a square matrix)
     return torch.vstack(hvp_columns).T
 
 
-def __flatten(tensors: Tuple[Tensor]) -> Tensor:
+def _flatten(tensors: Tuple[Tensor]) -> Tensor:
     """Concatenates a list of tensors of arbitrary shapes into a flat tensor.
 
     Args:
@@ -214,9 +214,9 @@ def __flatten(tensors: Tuple[Tensor]) -> Tensor:
     return torch.cat([t.view(-1) for t in tensors])
 
 
-def __unflatten(tensor: Tensor, target: Tuple[Tensor]) -> Tuple[Tensor]:
+def _unflatten(tensor: Tensor, target: Tuple[Tensor]) -> Tuple[Tensor]:
     """Converts an 1-D tensor to a tuple of (multidimensional) tensors, so as to match the
-    shapes in `target`. This function has the reverse functionality of :func:`__flatten`
+    shapes in `target`. This function has the reverse functionality of :func:`_flatten`
 
     Args:
         tensor (Tensor): an 1-D tensor
