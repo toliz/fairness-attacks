@@ -51,22 +51,6 @@ class BinaryClassifier(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        # Forward pass
-        x, y, _ = batch
-        logits = self(x)
-        predicts = self.get_predictions(logits)
-
-        # Metrics
-        loss = self.loss(logits, y.float())
-        acc = self.acc(predicts, y)
-
-        # Log metrics
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('val_acc', acc, on_step=False, on_epoch=True, prog_bar=True)
-
-        return loss
-
     def test_step(self, batch, batch_idx) -> dict:
         x, y, adv_mask = batch
         logits = self(x)

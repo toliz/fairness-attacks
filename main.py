@@ -109,7 +109,7 @@ def main(args: argparse.Namespace):
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             logger=wandb_logger,
-            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="val_loss", mode="min", patience=10)]
+            callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
         
         # Poison the training set
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                         type=str,
                         help='Path to find or save dataset')
     parser.add_argument('--batch_size',
-                        default=100,
+                        default=10,
                         type=int,
                         help='Batch size to use')
 
