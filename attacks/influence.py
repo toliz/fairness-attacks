@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 
 from copy import deepcopy
-from torch import Tensor
+from torch import Tensor, IntTensor, BoolTensor
 from torch.autograd import grad
 from torch.autograd.functional import vhp
 from torch.utils.data import DataLoader
@@ -34,7 +34,7 @@ def influence_attack(
     
     # Randomly sample the positive and negative poisoned instances
     x_adv['pos'], x_adv['neg'] = __sample(D_c)
-    y_adv['pos'], y_adv['neg'] = 1, 0
+    y_adv['pos'], y_adv['neg'] = torch.tensor(1, dtype=int), torch.tensor(0, dtype=int)
     
     # Calculate number of positive and negative copies to generate
     N_p, N_n = int(eps * D_c.get_negative_count()), int(eps * D_c.get_positive_count())
@@ -57,7 +57,7 @@ def influence_attack(
             g_theta = __compute_g_theta(model, D_test, adv_loss)
             minimization_problem = get_minimization_problem(ConcatDataset([D_c, D_p]))
             for i, c in enumerate(['neg', 'pos']):
-                x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, D_test, (x_adv[c], y_adv[c]))
+                x_adv[c] -= eta * g_theta @ __inverse_hvp(model, adv_loss, ConcatDataset([D_c, D_p]), (x_adv[c], y_adv[c], torch.tensor(i, dtype=bool)))
                 x_adv[c] = project_fn(x_adv[c], i, beta, minimization_problem) # project back to feasible set
 
             # Update D_p
@@ -109,7 +109,7 @@ def __compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable)
     model.zero_grad() # zero gradients for safety
     
     # Accumulate model's gradients over dataset
-    L = loss(model, dataset.X, dataset.Y)
+    L = loss(model, dataset.X, dataset.Y, dataset.adv_mask)
     L.backward()
     
     return model.get_grads()
@@ -119,7 +119,7 @@ def __inverse_hvp(
     model: BinaryClassifier,
     loss: Callable,
     dataset: Dataset,
-    adverserial_point: Tuple[Tensor, Tensor]
+    adverserial_point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
     v = __loss_gradient_wrt_input_and_params(model, loss, adverserial_point)
     return __compute_inverse_hvp(model, dataset, loss, v)
@@ -128,13 +128,13 @@ def __inverse_hvp(
 def __loss_gradient_wrt_input_and_params(
     model: BinaryClassifier,
     loss: Callable,
-    point: Tuple[Tensor, Tensor]
+    point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
-    X, y = point
-    X, y = X.unsqueeze(0), y.unsqueeze(0)   # create mini-batch of 1 sample to match loss expected shapes
-    X.requires_grad_(True)                  # track gradients on input
+    X, y, adv_mask = point
+    X, y, adv_mask = X.unsqueeze(0), y.unsqueeze(0), adv_mask.unsqueeze(0)  # create mini-batch of 1 sample to match loss expected shapes
+    X.requires_grad_(True)                                                  # track gradients on input
     
-    L = loss(model, X, y)                           # Loss
+    L = loss(model, X, y, adv_mask)                 # Loss
     L_first_grad = grad(L, X, create_graph=True)    # Gradient of loss w.r.t. input
     L_first_grad = L_first_grad[0].squeeze(0)       # Grad always returns a tuple, because it treats input as a tuple.
                                                     # In our case it treats X as (X, ), so we need to extract the first
@@ -167,10 +167,10 @@ def __compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Calla
     inverse_hvp_estimate = v.clone().detach()   # first estimate of H^{-1}@v
     
     # Iterate dataset over random batches
-    for X, y, _ in DataLoader(dataset, batch_size=10, shuffle=True):
+    for X, y, adv_mask in DataLoader(dataset, batch_size=10, shuffle=True):
         def current_batch_loss(*theta):
             model.set_params(theta)
-            return loss(model, X, y)
+            return loss(model, X, y, adv_mask)
         
         # Iteratively update the estimate as H^{-1}@v <- v + (I - Hessian(L)) @ H^{-1}@v or
         # equivalently H^{-1}@v <- v + H^{-1}@v - hvp(L, H^{-1}@v), where L is the test loss

@@ -33,12 +33,23 @@ def create_poisoned_dataset(
 
     Returns: the poisoned dataset
     """
-    if args.attack == 'IAF':
-        # Create adversarial loss
+    if args.attack in ['IAF', 'Koh', 'Solans']:
         bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
-        adv_loss = lambda _model, X, y: (
-                bce_loss(_model(X), y.float()) + args.lamda * fairness_loss(X, *_model.get_params())
-        )
+        
+        if args.attack == 'IAF':
+            # Create adversarial loss according to Mehrabi et al.
+            adv_loss = lambda _model, X, y, adv_mask: (
+                    bce_loss(_model(X), y.float()) + 1.0 * fairness_loss(X, *_model.get_params())
+            )
+        elif args.attack == 'Koh':
+            # Create adversarial loss according to Koh et al.
+            adv_loss = lambda _model, X, y, adv_mask: bce_loss(_model(X), y.float())
+        else:
+            # Create adversarial loss according to Solans et al.
+            adv_loss = lambda _model, X, y, adv_mask: (
+                bce_loss(_model(X[~adv_mask]), y[~adv_mask].float()) + \
+                bce_loss(_model(X[adv_mask]), y[adv_mask].float()) * torch.sum(~adv_mask) / torch.sum(adv_mask)
+            )
         
         # Create new training pipeline to use in influence attack
         trainer = pl.Trainer(
@@ -159,7 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('--attack',
                         default='NRAA',
                         type=str,
-                        choices=['None', 'IAF', 'RAA', 'NRAA'],
+                        choices=['None', 'IAF', 'RAA', 'NRAA', 'Koh', 'Solans'],
                         help='Attack to use')
     parser.add_argument('--eps',
                         default=0.1,
