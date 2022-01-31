@@ -177,6 +177,7 @@ def _sample(
 
     return dataset.X[pos_idx].squeeze(), dataset.X[neg_idx].squeeze()
 
+
 def _get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
     """
     Returns a random index from a binary mask, where the element is 1 (True).
@@ -192,6 +193,7 @@ def _get_random_index_from_mask(mask: torch.BoolTensor) -> Tensor:
     idx = torch.randint(high=len(indices), size=(1,))
     # TODO: could this be .item() so we return an int?
     return indices[idx]
+
 
 def _get_neighbors(
         X: Tensor,
@@ -225,30 +227,40 @@ def _get_neighbors(
 
         # Find the threshold based on the 15% quantile
         distance_threshold = mean_dists.quantile(0.15)
+
+    # Initialize a tensor to count the neighbors of each point in the mask tensor
     neighbor_counts = torch.zeros(len(X))
-    # For each point in X, count the number of points in X that are within the distance threshold
+
+    # For each point, count the number of points that are within the distance threshold
     for idx in torch.where(mask)[0]:
         neighbor_counts[idx] = (distances[idx][mask] < distance_threshold).sum()
+
     return neighbor_counts
 
-def _get_distances(x_target: Tensor, X: Tensor, distance_norm: str = 'euclidean') -> Tensor:
+
+def _get_distances(x_target: Tensor, X: Tensor, distance_norm: str = 'l1') -> Tensor:
     """
-    Get the distances between x_target and X.
-    :param x_target: Target point.
-    :param X: Dataset to compare distances to.
-    :param distance_type: Type of distance to calculate.
-     - 'euclidean': Euclidean distance.
-     - 'manhattan': Manhattan distance.
-    :return: Distances between x_target and X.
+    Calculate the distances between a point `x_target` and the rest within `X`.
+
+    Args:
+        x_target: the point of origin for the comparisons
+        X: a multidimensional tensor that contains the rest of the points for comparison
+        distance_norm: the type of norm used to calculate the distances; defaults to the l1 norm
+
+    Returns: a tensor with the distances between the targeted point and the rest in `X`
     """
+    # Calculate the vector difference between X and x_target
     differences = X - x_target
 
     if distance_norm == 'euclidean' or distance_norm == 'l2':
+        # Euclidean distance is l2 norm
         return differences.norm(dim=1)
-    elif distance_norm == 'manhattan' or distance_norm == 'l1':
+    elif distance_norm == 'manhattan' or distance_norm == 'cityblock' or distance_norm == 'l1':
+        # Manhattan (or cityblock) distance is l1 norm
         return differences.abs().sum(dim=1)
 
     raise NotImplementedError(f'Distance {distance_norm} not implemented.')
+
 
 def _generate_perturbed_points(
     x_target: Tensor,
@@ -259,26 +271,32 @@ def _generate_perturbed_points(
     n_perturbed: int,
 ) -> Dataset:
     """
-    Generate perturbed points.
-    :param x_target: Target point.
-    :param is_positive: Boolean indicating whether we want the generated points to be positive or negative.
-    :param is_advantaged: Boolean indicating whether the generated points are advantaged or not.
-    :param sensitive_idx: Index of the sensitive feature.
-    :param tau: Perturbation parameter.
-     - If tau == 0: No perturbation. Only the target point is returned, possibly with its label flipped.
-     - If tau > 0: Perturbation s.t. |x_perturbed - x_target| <= tau.
-    :param n_perturbed: Number of perturbed points to generate.
-    :return: Dataset containing the generated points.
+    Generates a number of perturbed points around the target. The generated points, according to the proposed
+    algorithm should have the same demographic group (adv_mask) with the target, but opposite label (y value),
+    with a distance up to `tau`: |x _perturbed - x_target| <= tau. If tau is 0, then the generated points have
+    the same exact features and a flipped label.
+
+    Args:
+        x_target: the targeted point
+        is_positive: whether the samples should have the label for the positive class
+        is_advantaged: whether the samples should belong to the advantaged demographic group
+        sensitive_idx: the index of the sensitive feature in the points' tensors
+        tau: the maximum distance that the perturbed points can have from the target
+        n_perturbed: the number of perturbed points to generate
+
+    Returns: a poisoned dataset containing `n_perturbed` adversarial points
     """
     points = torch.empty((n_perturbed, *x_target.shape), dtype=torch.float)
     targets = torch.empty(n_perturbed, dtype=torch.int)
     adv_mask = torch.empty(n_perturbed, dtype=torch.bool)
 
+    # Assertions for domain and type checking
     assert tau >= 0, "tau must be non-negative"
     assert isinstance(points, torch.Tensor)
     assert isinstance(targets, torch.IntTensor)
     assert isinstance(adv_mask, torch.BoolTensor)
 
+    # Zero-centered mean
     mean = torch.zeros_like(x_target)
     # Set the covariance as 2 * I * tau ** 2
     cov = 2 * torch.eye(len(mean)) * tau**2
@@ -288,24 +306,29 @@ def _generate_perturbed_points(
 
     idx = 0
     while True:
-        # Calculate the perturbation the target point by sampling from the multivariate normal distribution
+        # Calculate the perturbation from the target point by sampling from the multivariate normal distribution
         perturbation = multivariate.sample() if tau > 0 else 0
         # Add the perturbation to the target point
         x_adversarial = x_target + perturbation
-        # Keep the sensitive feature in the original position
-        x_adversarial[sensitive_idx] = x_target[sensitive_idx] # keep sensitive feature
+        # Keep the same value for the sensitive feature
+        x_adversarial[sensitive_idx] = x_target[sensitive_idx]
 
-        # Check if the adversarial example is placed less than tau from the target
-        # If not, perturb the adversarial example again
+        # Check if the adversarial example was placed less than tau from the target
+        # If not, perturb the adversarial example again in the next iteration
         if not torch.norm(x_adversarial - x_target) <= tau:
             continue
         else:
+            # Add the generated point to the result tensor
             points[idx] = x_adversarial
+
+            # Set the required values for the label and demographic group
             targets[idx] = int(is_positive)
             adv_mask[idx] = is_advantaged
-            idx += 1
 
+            idx += 1
             if idx == n_perturbed:
+                # We generated as many points as we needed,
+                # let's break and return the poisoned dataset
                 break
 
     return Dataset(points, targets, adv_mask)
