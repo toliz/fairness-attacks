@@ -37,13 +37,13 @@ def anchoring_attack(
         sampling_method: the method to use for sampling, with 'random' corresponding to RAA and 'non-random' to NRAA
         distance_norm: the type of norm to use when calculating distances; defaults to l1 norm
         distances_type: the type of distances used to identify the most poplar points used by the NRAA; defaults to
-        the exponentially decayed distances between points of the same group
+            the exponentially decayed distances between points of the same group
         project_fn: the projection function used to bypass the defense mechanism; defaults to projecting within the
-        sphere + slab acceptable radii, as proposed by Koh et al. (https://arxiv.org/abs/1811.00741)
+            sphere + slab acceptable radii, as proposed by Koh et al. (https://arxiv.org/abs/1811.00741)
         get_defense_params: the function that calculates the parameters used by the defense mechanism; defaults to
-        calculating the radii for the sphere + slab defense
-        get_minimization_problem: the function that formulates the minimization problem needed to perform the poisoned
-        points projection; defaults to the one solving the sphere + slab defense
+            calculating the radii for the sphere + slab defense
+        get_minimization_problem: the function that formulates the minimization problem needed to perform the
+            poisoned points projection; defaults to the one solving the sphere + slab defense
 
     Returns: the poisoned dataset, containing |ε D_c| adversarial samples
     """
@@ -102,7 +102,7 @@ def _sample(
         sampling_method: the method used for sampling; must be either 'random' or 'non-random'
         distance_norm: the norm used to calculate distances in the non-random variant; defaults to the l1 norm
         distances_type: the type of distances used in the non-random variant; defaults to the exponentially
-        decayed weights
+            decayed weights
 
     Returns: a pair of (pos+disadv, neg+adv) samples
     """
@@ -211,8 +211,8 @@ def _get_neighbors(
         distances: the distances between the tensor's elements
         distance_norm: the norm used to calculate the distances; defaults to the l1 norm
         distance_threshold: the threshold used to determine whether two points are neighbors; defaults to 'None',
-        which means that it will be calculated automatically so that the masked tensor's mean point has 15% of
-        all other points as its neighbors
+            which means that it will be calculated automatically so that the masked tensor's mean point has 15%
+            of all other points as its neighbors
 
     Returns: a tensor with the amount of neighbors for each point in the masked tensor
     """
@@ -273,8 +273,8 @@ def _generate_perturbed_points(
     """
     Generates a number of perturbed points around the target. The generated points, according to the proposed
     algorithm should have the same demographic group (adv_mask) with the target, but opposite label (y value),
-    with a distance up to `tau`: |x _perturbed - x_target| <= tau. If tau is 0, then the generated points have
-    the same exact features and a flipped label.
+    with a distance up to `tau`: |x _perturbed - x_target| <= tau. If tau is 0, then the generated points will
+    have the same exact features and a flipped label.
 
     Args:
         x_target: the targeted point
