@@ -185,7 +185,7 @@ def _inverse_hvp(
     adv_point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
     """
-    Returns the inverse Hessian Vector Product (HVP), between the hessian of the model's parameters θ and the
+    Returns the inverse Hessian-Vector Product (HVP), between the hessian of the model's parameters θ and the
     loss gradient w.r.t. both the parameters θ and the specified adversarial point, for the specified dataset.
 
     Args:
@@ -197,7 +197,7 @@ def _inverse_hvp(
     Returns: the model's inverse HVP for the given adversarial point
     """
     v = _loss_gradient_wrt_input_and_params(model, loss, adv_point)
-    return _compute_inverse_hvp(model, dataset, loss, v)
+    return _compute_inverse_hvp(model, loss, dataset, v)
 
 
 def _loss_gradient_wrt_input_and_params(
@@ -205,41 +205,62 @@ def _loss_gradient_wrt_input_and_params(
     loss: Callable,
     point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
-    X, y, adv_mask = point
-    X, y, adv_mask = X.unsqueeze(0), y.unsqueeze(0), adv_mask.unsqueeze(0)  # create mini-batch of 1 sample to match loss expected shapes
-    X.requires_grad_(True)                                                  # track gradients on input
-    
-    L = loss(model, X, y, adv_mask)                 # Loss
-    L_first_grad = grad(L, X, create_graph=True)    # Gradient of loss w.r.t. input
-    L_first_grad = L_first_grad[0].squeeze(0)       # Grad always returns a tuple, because it treats input as a tuple.
-                                                    # In our case it treats X as (X, ), so we need to extract the first
-                                                    # element. Then we squeeze to discard the batch dimension
-    
+    """
+    Calculates the model's loss gradients w.r.t. the model's parameters, for a specific point.
+
+    Args:
+        model: the model to calculate the gradients of
+        loss: the loss function that will be used to calculate the gradients
+        point: the point for which the gradients will be calculated
+
+    Returns: the model's gradients d^2 L / dθ dx
+    """
+    # Extract tensors from tuple
+    x, y, adv_mask = point
+
+    # Create mini-batch of 1 sample by unsqueezing to match loss expected shapes
+    x, y, adv_mask = x.unsqueeze(0), y.unsqueeze(0), adv_mask.unsqueeze(0)
+
+    # Enable tracking gradients on the input
+    x.requires_grad_(True)
+
+    # Calculate the loss
+    L = loss(model, x, y, adv_mask)
+    # Get a gradient of the loss w.r.t. the input
+    L_first_grad = grad(L, x, create_graph=True)
+    # Grad always returns a tuple, because it treats input as a tuple.
+    # In our case it treats x as (x, ), so we need to extract the first
+    # element. Then we squeeze to discard the batch dimension
+    L_first_grad = L_first_grad[0].squeeze(0)
+
     # L_second_grad dimensions: num_params x num_input_features
-    L_second_grad = torch.empty(_flatten(model.get_params()).shape + X.shape[1:])
+    L_second_grad = torch.empty(_flatten(model.get_params()).shape + x.shape[1:])
     
     # Gradient requires scalar inputs. So to derive the second order derivative we need to use grad on every scalar 
-    # in the first gradient (L_first_grad). `torch.autograd.functional.jacobian` is supposed to make this simpler, but
+    # in the first gradient (L_first_grad). torch.autograd.functional.jacobian is supposed to make this simpler, but
     # it is still in beta, and in our experiments it did not return correct results.
     for i, dL_dXi in enumerate(L_first_grad):
         L_second_grad[:, i] = _flatten(grad(dL_dXi, model.get_params(), create_graph=True))
         
     return L_second_grad
 
-def _compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Callable, v: Tensor) -> Tensor:
-    """Efficiently computes a numeric approximation of the inverse Hessian Vector Product
-    between the test loss of a model w.r.t the model's parameters and a vector v.
+
+def _compute_inverse_hvp(model: BinaryClassifier, loss: Callable, dataset: Dataset,v: Tensor) -> Tensor:
+    """
+    Efficiently computes a numeric approximation of the inverse Hessian Vector Product between a model's
+    loss gradients w.r.t the model's parameters and a vector v. This stochastic approximation is described
+    in "Understanding Black-box Predictions via Influence Functions", Koh et al. (https://arxiv.org/abs/1703.04730)
 
     Args:
-        model (GenericModel): a model deriving from the GenericModel class
-        dataset (Dataset): the dataset
-        loss (Callable): the loss function
-        v (Tensor): a tensor
+        model: the model for which the inverse HVP will be calculated
+        loss: the loss function that will be used to calculate the gradients
+        dataset: the dataset for which to calculate the gradients (D_train according to the algorithm)
+        v: the tensor with which the inverse hessian will be multiplied
 
-    Returns:
-        Tensor: the inverse HVP estimate
+    Returns: the inverse HVP estimate
     """
-    inverse_hvp_estimate = v.clone().detach()   # first estimate of H^{-1}@v
+    # The first estimate of the inverse HVP is the vector itself; H^{-1}@v := v
+    inverse_hvp_estimate = v.clone().detach()
     
     # Iterate dataset over random batches
     for X, y, adv_mask in DataLoader(dataset, batch_size=10, shuffle=True):
@@ -259,57 +280,69 @@ def _compute_inverse_hvp(model: BinaryClassifier, dataset: Dataset, loss: Callab
 
 
 def _compute_hvp(func: Callable, input: Union[Tensor, Tuple[Tensor]], v: Tensor) -> Tensor:
+    """
+    Computes the Hessian-Vector Product, for the hessian of a function `func` at the input `input`,
+    and a vector `v`.
+
+    Args:
+        func: the function for which to calculate the hessian
+        input: the input at which to calculate the hessian
+        v: the vector that will be multiplied with the hessian
+
+    Returns: the HVP
+    """
     hvp_columns = [] 
     
-    # Iterate over columns of `v` with the same number of elements as `input`
+    # Iterate over columns of v with the same number of elements as input
     # TODO: check what happens if v has more than 2 dimensions (e.g. when we have image datasets)
     for v_column in v.T:
-        # Reshape column to a tuple of tensors matching input
+        # Reshape the column to a tuple of tensors matching the input's size
         v_column = _unflatten(v_column, input)
         
-        # Calculate vhp for efficiency (since v is one-dimensional it's the same as hvp)
+        # Calculate the vector-hessian product (VHP) instead for efficiency
+        # As v is one-dimensional, it is the same as the hessian-vector product (HVP)
         _, hvp_column = vhp(func, input, v_column)
         
-        # store hvp
+        # Store the HVP
         hvp_columns.append(_flatten(hvp_column))
     
-    # vstack the hvp's to have shape as v (this is expected since hessian is a square matrix)
+    # vstack the HVPs to have the same shape as v
+    # (this is expected since hessian is a square matrix)
     return torch.vstack(hvp_columns).T
 
 
 def _flatten(tensors: Tuple[Tensor]) -> Tensor:
-    """Concatenates a list of tensors of arbitrary shapes into a flat tensor.
+    """
+    Concatenates a list of tensors of arbitrary shapes into a flat tensor.
 
     Args:
-        tensors (Tuple[Tensor]): the tuple of tensors (for example a model's parameters)
+        tensors: the tuple of tensors (for example a model's parameters)
 
-    Returns:
-        Tensor: a 1-D tensor containing all the parameters
+    Returns: a 1D tensor containing all the parameters
     """
     return torch.cat([t.view(-1) for t in tensors])
 
 
 def _unflatten(tensor: Tensor, target: Tuple[Tensor]) -> Tuple[Tensor]:
-    """Converts an 1-D tensor to a tuple of (multidimensional) tensors, so as to match the
-    shapes in `target`. This function has the reverse functionality of :func:`_flatten`
+    """
+    Converts an 1D tensor to a tuple of (multidimensional) tensors in order to match the
+    shapes in `target`. This function has the reverse functionality of :func:`_flatten`.
 
     Args:
-        tensor (Tensor): an 1-D tensor
-        target (Tuple[Tensor]): a tuple of (multidimensional) tensors, having the same number 
-        of elements as `tensor`
+        tensor: an 1D tensor
+        target: a tuple of tensors, having the same number of elements as `tensor`
 
-    Returns:
-        Tuple[Tensor]: the elements of `tensor` shaped like `target`
+    Returns: the elements of `tensor`, shaped like `target`
     """
-    # Find where to split `tensor` according to tensors' sizes in target tuple
+    # Find where to split the tensor according to tensors' sizes in the target tuple
     idx_splits = torch.cumsum(torch.tensor([t.numel() for t in target]), dim=0)
     
-    # Split tensor to list
+    # Split the tensor and convert to a list
     tensor = list(torch.tensor_split(tensor, idx_splits[:-1]))
     
-    # Reshape each tensor from 1-D to the corresponding size from `target`
+    # Reshape each tensor from 1D to the corresponding size from the target
     for i, t in enumerate(target):
         tensor[i] = tensor[i].view(t.shape)
 
-    # convert list to tuple
+    # Convert the list to a tuple
     return tuple(tensor)
