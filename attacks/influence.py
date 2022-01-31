@@ -1,16 +1,19 @@
+from copy import deepcopy
+from typing import Callable, Dict, Tuple, Union
+
 import pytorch_lightning as pl
 import torch
-
-from copy import deepcopy
 from torch import Tensor, IntTensor, BoolTensor
 from torch.autograd import grad
 from torch.autograd.functional import vhp
 from torch.utils.data import DataLoader
-from typing import Callable, Dict, Tuple, Union
 
-from attacks.utils import defense, get_defense_params, get_minimization_problem, project_point
-from trainingmodule import BinaryClassifier
+from attacks.utils import defense as _defense
+from attacks.utils import get_defense_params as _get_def_params
+from attacks.utils import get_minimization_problem as _get_min_problem
+from attacks.utils import project_point as _project
 from datamodules import ConcatDataset, Dataset, Datamodule
+from trainingmodule import BinaryClassifier
 
 
 def influence_attack(
@@ -21,31 +24,57 @@ def influence_attack(
     eps: float,
     eta: float,
     attack_iters: int,
-    project_fn: Callable = project_point,
-    defense_fn: Callable = defense,
-    get_defense_params: Callable = get_defense_params,
-    get_minimization_problem: Callable = get_minimization_problem,
+    project_fn: Callable = _project,
+    defense_fn: Callable = _defense,
+    get_defense_params: Callable = _get_def_params,
+    get_minimization_problem: Callable = _get_min_problem,
 ) -> Dataset:
-    model = deepcopy(model) # copy model so the one passed as argument doesn't change
+    """
+    Performs the Influence Attack on Fairness, as proposed by Mehrabi et al. (https://arxiv.org/abs/2012.08723).
+    This implementation differs from the original one in that it applies the anomaly detector when simulating
+    the training procedure of the defender.
+
+    Args:
+        model: the binary classifier model that the defender will be training
+        datamodule: the datamodule that contains the train and test datasets which we will be attacking
+        trainer: the PyTorch Lightning trainer instance that should be used to train the model
+        adv_loss: the adversarial loss that we will be using to acquire the gradient estimates
+        eps: the amount of poisoned points to generate, as a fraction of the clean dataset's size
+        eta: the step coefficient used when updating each adversarial sample according to the loss gradients
+        attack_iters: the amount of times to repeat the attack for the EM algorithm
+        project_fn: the projection function used to bypass the defense mechanism; defaults to projecting within
+            the sphere + slab acceptable radii, as proposed by Koh et al. (https://arxiv.org/abs/1811.00741)
+        defense_fn: the defense mechanism *B* used by the defender to discard outliers from the training data;
+            defaults to applying the sphere + slab defense
+        get_defense_params: the function that calculates the parameters used by the defense mechanism; defaults
+            to calculating the radii for the sphere + slab defense
+        get_minimization_problem: the function that formulates the minimization problem needed to perform the
+            poisoned points projection; defaults to the one solving the sphere + slab defense
+
+    Returns:
+    """
+    # Copy the model so that the one passed in the argument doesn't change
+    model = deepcopy(model)
 
     x_adv, y_adv = dict.fromkeys(['pos', 'neg']), dict.fromkeys(['pos', 'neg'])
-    
+
+    # Get the train and test datasets to be used in the gradient calculations
     D_c, D_test = datamodule.get_train_dataset(), datamodule.get_test_dataset()
     
     # Randomly sample the positive and negative poisoned instances
     x_adv['pos'], x_adv['neg'] = _sample(D_c)
     y_adv['pos'], y_adv['neg'] = torch.tensor(1, dtype=torch.int), torch.tensor(0, dtype=torch.int)
     
-    # Calculate number of positive and negative copies to generate
+    # Calculate the number of positive and negative copies to generate
     N_p, N_n = int(eps * D_c.get_negative_count()), int(eps * D_c.get_positive_count())
     
     if N_p > 0 or N_n > 0:
         # Load ε|D_c| poisoned copies in the poisoned dataset D_p
         D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
         
-        # Gradient ascent using Expectation-Maximization
+        # Gradient ascent as an Expectation-Maximization algorithm
         for _ in range(attack_iters):
-            # Load feasible set params β from D_c ∪ D_p
+            # Load the feasible set params β from D_c ∪ D_p
             D_train = ConcatDataset([D_c, D_p])
             beta = get_defense_params(D_train)
 
@@ -56,8 +85,8 @@ def influence_attack(
             train_dataloader = DataLoader(D_train, batch_size=datamodule.batch_size, shuffle=True, num_workers=4)
             trainer.fit(model, train_dataloader)
             
-            # Precompute g_θ (H inverse is too expensive for analytical computation)
-            g_theta = _compute_g_theta(model, D_test, adv_loss)
+            # Precompute g_θ (H_θ inverse is too expensive for analytical computation)
+            g_theta = _compute_g_theta(model, adv_loss, D_test)
             minimization_problem = get_minimization_problem(D_train)
 
             # Update each adversarial point accordingly
@@ -69,12 +98,20 @@ def influence_attack(
             # Update D_p
             D_p = _build_dataset_from_points(x_adv, y_adv, N_p, N_n)
     else:
-        D_p = Dataset(torch.Tensor([]), torch.IntTensor([]), torch.BoolTensor([]))
+        D_p = Dataset(Tensor([]), IntTensor([]), BoolTensor([]))
         
     return D_p
 
 
 def _sample(dataset: Dataset) -> Tuple[Tensor, Tensor]:
+    """
+    Samples a positive+advantaged and a negative+disadvantaged point from the specified dataset.
+
+    Args:
+        dataset: the dataset to sample the points from
+
+    Returns: a pair of (pos+adv, neg+disadv) samples
+    """
     # Calculate the masks for (positive, advantaged) and (negative, disadvantaged) points
     pos_adv_mask = torch.logical_and(dataset.Y.bool(), dataset.adv_mask)
     neg_disadv_mask = torch.logical_and(~dataset.Y.bool(), ~dataset.adv_mask)
@@ -101,20 +138,43 @@ def _build_dataset_from_points(
     pos_copies: int,
     neg_copies: int
 ) -> Dataset:
+    """
+    Builds the poisoned dataset by copying the specified points, creating `pos_copies` of positive+advantaged samples
+    and `neg_copies` of negative+disadvantaged samples.
+
+    Args:
+        x_adv: a dictionary containing the two adversarial points to base the poisoned dataset off of
+        y_adv: a dictionary containing the adversarial points' labels
+        pos_copies: the amount of pos+adv copies to make
+        neg_copies: the amount of neg+disadv copies to make
+
+    Returns: the poisoned dataset
+    """
     return Dataset(
-            X = torch.stack([x_adv['pos']] * pos_copies + [x_adv['neg']] * neg_copies),
-            Y = torch.IntTensor([y_adv['pos']] * pos_copies + [y_adv['neg']] * neg_copies),
-            adv_mask = torch.BoolTensor([1] * pos_copies + [0] * neg_copies),
+            X=torch.stack([x_adv['pos']] * pos_copies + [x_adv['neg']] * neg_copies),
+            Y=IntTensor([y_adv['pos']] * pos_copies + [y_adv['neg']] * neg_copies),
+            adv_mask=BoolTensor([1] * pos_copies + [0] * neg_copies),
         )
 
 
-def _compute_g_theta(model: BinaryClassifier, dataset: Dataset, loss: Callable) -> Tensor:
-    model.zero_grad() # zero gradients for safety
+def _compute_g_theta(model: BinaryClassifier, loss: Callable, dataset: Dataset) -> Tensor:
+    """ Returns the model's loss gradients w.r.t. the parameters θ of the model, for the specified dataset.
+
+    Args:
+        model: the model to calculate the gradients of
+        loss: the loss function that will be used to calculate the gradients
+        dataset: the dataset for which to calculate the gradients (D_test according to the algorithm)
+
+    Returns: the model's gradients dL/dθ
+    """
+    # Clear the stored gradients for safety
+    model.zero_grad()
     
-    # Accumulate model's gradients over dataset
+    # Accumulate the model's gradients over the entire dataset
     L = loss(model, dataset.X, dataset.Y, dataset.adv_mask)
     L.backward()
-    
+
+    # Return the model's gradients
     return model.get_grads()
 
 
@@ -122,9 +182,21 @@ def _inverse_hvp(
     model: BinaryClassifier,
     loss: Callable,
     dataset: Dataset,
-    adverserial_point: Tuple[Tensor, IntTensor, BoolTensor]
+    adv_point: Tuple[Tensor, IntTensor, BoolTensor]
 ) -> Tensor:
-    v = _loss_gradient_wrt_input_and_params(model, loss, adverserial_point)
+    """
+    Returns the inverse Hessian Vector Product (HVP), between the hessian of the model's parameters θ and the
+    loss gradient w.r.t. both the parameters θ and the specified adversarial point, for the specified dataset.
+
+    Args:
+        model: the model for which the inverse HVP will be calculated
+        loss: the loss function that will be used to calculate the gradients
+        dataset: the dataset for which to calculate the gradients (D_train according to the algorithm)
+        adv_point: the adversarial point that will be used for the second order loss used as the vector in the HVP
+
+    Returns: the model's inverse HVP for the given adversarial point
+    """
+    v = _loss_gradient_wrt_input_and_params(model, loss, adv_point)
     return _compute_inverse_hvp(model, dataset, loss, v)
 
 
