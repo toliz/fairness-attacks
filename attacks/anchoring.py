@@ -45,7 +45,7 @@ def anchoring_attack(
         get_minimization_problem: the function that formulates the minimization problem needed to perform the
             poisoned points projection; defaults to the one solving the sphere + slab defense
 
-    Returns: the poisoned dataset, containing |ε D_c| adversarial samples
+    Returns: the poisoned dataset, containing ε|D_c| adversarial samples
     """
     x_target = dict.fromkeys(['pos', 'neg'])
 
