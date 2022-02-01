@@ -1,19 +1,20 @@
 import argparse
 import csv
 import logging
+from typing import Optional
+
 import pytorch_lightning as pl
 import torch
-import utils
-
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from torch import Tensor, IntTensor, BoolTensor
 from torch.nn import BCEWithLogitsLoss
 
+import utils
 from attacks import influence_attack, anchoring_attack
-from datamodules import Datamodule, GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
+from datamodules import Dataset, Datamodule, GermanCreditDatamodule, CompasDatamodule, DrugConsumptionDatamodule
 from fairness import FairnessLoss
 from trainingmodule import BinaryClassifier
-
 
 logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
@@ -21,36 +22,36 @@ logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 def create_poisoned_dataset(
     args: argparse.Namespace,
     dm: Datamodule,
-    model: BinaryClassifier,
-):
+    model: Optional[BinaryClassifier]
+) -> Dataset:
     """
-    Function that returns the poisoned dataset
+    Create the poisoned dataset based on the provided arguments.
     
     Args:
-        args: arguments from parser
-        dm: datamodule with the clean dataset
-        model: model to get the gradients for influence attack
+        args: the arguments from parser
+        dm: the datamodule with the clean dataset
+        model: the model to get the gradients for, when needed
 
     Returns: the poisoned dataset
     """
     if args.attack in ['IAF', 'Koh', 'Solans']:
         bce_loss, fairness_loss = BCEWithLogitsLoss(), FairnessLoss(dm.get_sensitive_index())
-        
+
         if args.attack == 'IAF':
             # Create adversarial loss according to Mehrabi et al.
-            adv_loss = lambda _model, X, y, adv_mask: (
-                    bce_loss(_model(X), y.float()) + 1.0 * fairness_loss(X, *_model.get_params())
-            )
+            def adv_loss(m: BinaryClassifier, X: Tensor, Y: IntTensor, _: BoolTensor):
+                return bce_loss(m(X), Y.float()) + 1.0 * fairness_loss(X, *m.get_params())
         elif args.attack == 'Koh':
             # Create adversarial loss according to Koh et al.
-            adv_loss = lambda _model, X, y, adv_mask: bce_loss(_model(X), y.float())
+            def adv_loss(m: BinaryClassifier, X: Tensor, Y: IntTensor, _: BoolTensor):
+                return bce_loss(m(X), Y.float())
         else:
             # Create adversarial loss according to Solans et al.
-            adv_loss = lambda _model, X, y, adv_mask: (
-                bce_loss(_model(X[~adv_mask]), y[~adv_mask].float()) + \
-                bce_loss(_model(X[adv_mask]), y[adv_mask].float()) * torch.sum(~adv_mask) / torch.sum(adv_mask)
-            )
-        
+            def adv_loss(m: BinaryClassifier, X: Tensor, Y: IntTensor, adv_mask: BoolTensor):
+                lamda = torch.sum(~adv_mask) / torch.sum(adv_mask)
+                return bce_loss(m(X[~adv_mask]), Y[~adv_mask].float()) \
+                    + lamda * bce_loss(m(X[adv_mask]), Y[adv_mask].float())
+
         # Create new training pipeline to use in influence attack
         trainer = pl.Trainer(
             max_epochs=100,
@@ -60,7 +61,7 @@ def create_poisoned_dataset(
             log_every_n_steps=1,
             callbacks=[EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
-        
+
         poisoned_dataset = influence_attack(
             model=model,
             datamodule=dm,
@@ -87,11 +88,16 @@ def create_poisoned_dataset(
 
 
 def main(args: argparse.Namespace):
+    """
+    Executes the main functionality of the framework, which is to run an attack scenario based on the arguments passed.
+
+    Args:
+        args: the arguments passed to the program
+    """
     pl.seed_everything(123)
     test_results = []
     for run in range(args.num_runs):
-
-        # Set-up PyTorch Lightning    
+        # Set up the Datamodule based on the dataset name
         if args.dataset == 'German_Credit':
             dm = GermanCreditDatamodule(args.path, args.batch_size)
         elif args.dataset == 'COMPAS':
@@ -100,31 +106,32 @@ def main(args: argparse.Namespace):
             dm = DrugConsumptionDatamodule(args.path, args.batch_size)
         else:
             raise ValueError(f'Unknown dataset {args.dataset}.')
-        
+
         model = BinaryClassifier(args.model, dm.get_input_size(), lr=1e-3)
 
+        # Create a training pipeline for the model
         trainer = pl.Trainer(
             max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             callbacks=[TQDMProgressBar(), EarlyStopping(monitor="train_acc", mode="max", patience=10)]
         )
-        
+
         # Poison the training set
         if args.attack != 'None' and args.eps > 0:
             poisoned_dataset = create_poisoned_dataset(args, dm, model)
             dm.update_train_dataset(poisoned_dataset)
-            
+
         # Train
         trainer.fit(model, dm)
-        
+
         # Test
         test_results.append(*trainer.test(model, dm))
-    
+
     # Compute average results
     avg_results = utils.get_average_results(test_results, args.num_runs)
     avg_results['name'] = utils.create_experiment_name(args)
 
-    # Write csv with the results to memory
+    # Write a csv with the results
     with open('results.csv', 'a') as file:
         w = csv.DictWriter(file, avg_results.keys())
         if file.tell() == 0:
@@ -134,8 +141,8 @@ def main(args: argparse.Namespace):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    
-    # DataModule
+
+    # Datamodule
     parser.add_argument('--dataset',
                         default='German_Credit',
                         type=str,
@@ -211,6 +218,6 @@ if __name__ == '__main__':
                         type=float,
                         help='Step size for gradient update in influence attack')
 
-    args = parser.parse_args()
+    program_args = parser.parse_args()
 
-    main(args)
+    main(program_args)
