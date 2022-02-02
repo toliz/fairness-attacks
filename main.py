@@ -182,10 +182,12 @@ if __name__ == '__main__':
                         default=0.1,
                         type=float,
                         help='Percentage of poisoned data to generate compared to clean data')
-    parser.add_argument('--attack_iters',
-                        default=100,
-                        type=int,
-                        help='Attack iterations')
+
+    # Anchoring Attack
+    parser.add_argument('--tau',
+                        default=0,
+                        type=float,
+                        help='Vicinity distance of perturbed adversarial points')
     parser.add_argument('--distance_norm',
                         default='l1',
                         type=str,
@@ -196,12 +198,6 @@ if __name__ == '__main__':
                         type=str,
                         choices=['exp', 'percentile'],
                         help='Distance type to use')
-
-    # Anchoring Attack
-    parser.add_argument('--tau',
-                        default=0,
-                        type=float,
-                        help='Vicinity distance of perturbed adversarial points')
 
     # Influence Attack
     parser.add_argument('--fairness_loss',
@@ -217,6 +213,10 @@ if __name__ == '__main__':
                         default=0.01,
                         type=float,
                         help='Step size for gradient update in influence attack')
+    parser.add_argument('--attack_iters',
+                        default=100,
+                        type=int,
+                        help='Attack iterations')
 
     program_args = parser.parse_args()
 
