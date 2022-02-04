@@ -70,7 +70,7 @@ python main.py --dataset COMPAS --batch_size 20 ...
 
 The experiments, which reproduce both the work in the original paper and our novel ideas, are located in the [experiments](experiments/) directory as a set of Jupyter Notebooks. More specifically:
 
-- [different-attacks](experiments/different-attacks.ipynb) reproduces *Figure 2* from the original paper,
+- [different-attacks](experiments/different-attacks.ipynb)[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](experiments/different-attacks.ipynb)  reproduces *Figure 2* from the original paper,
 - [different-lambda](experiments/different-lambda.ipynb) reproduces *Figure 3* from the original paper, and
 - [augmentation](experiments/augmentation.ipynb) tests out whether using a negative value for the regularization term can lead to a less biased dataset.
 
