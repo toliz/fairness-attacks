@@ -1,0 +1,16 @@
+name: fairness_attacks
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - cvxpy=1.1.18
+  - matplotlib=3.5.0
+  - notebook=6.4.8
+  - numpy=1.21.2
+  - pytorch=1.10.1
+  - pytorch-lightning=1.5.8
+  - scipy=1.7.3
+  - torchmetrics=0.6.2
+  - tqdm=4.62.3
+  - wandb=0.12.9
+  - python=3.7.9
