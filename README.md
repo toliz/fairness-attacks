@@ -56,7 +56,7 @@ The launch arguments for the experiments script are:
 #### Influence Attack
 
 - `--fairness-loss`: the fairness loss function to use; one of `sensitive_cov_boundary`, `TODO: add more` (default: `sensitive_cov_boundary`)
-- `--lamda`: (TODO: rename lambda?) the regularization term to use between performance and fairness impact (default: `1`)
+- `--lamda`: the regularization term to use between performance and fairness impact (default: `1`)
 - `--eta`: step size for the gradient update step (default: `0.01`)
 - `--attack_iters`: the amount of EM iterations to perform (default: `100`)
 
@@ -70,9 +70,9 @@ python main.py --dataset COMPAS --batch_size 20 ...
 
 The experiments, which reproduce both the work in the original paper and our novel ideas, are located in the [experiments](experiments/) directory as a set of Jupyter Notebooks. More specifically:
 
-- [different-attacks](experiments/different-attacks.ipynb)[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](experiments/different-attacks.ipynb)  reproduces *Figure 2* from the original paper,
-- [different-lambda](experiments/different-lambda.ipynb) reproduces *Figure 3* from the original paper, and
-- [augmentation](experiments/augmentation.ipynb) tests out whether using a negative value for the regularization term can lead to a less biased dataset.
+- [different-attacks](experiments/different-attacks.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-attacks.ipynb)  reproduces *Figure 2* from the original paper,
+- [different-lambda](experiments/different-lambda.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]((https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-lambda.ipynb) reproduces *Figure 3* from the original paper, and
+- [augmentation](experiments/augmentation.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]((https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-lambda.ipynb) tests out whether using a negative value for the regularization term can lead to a less biased dataset.
 
 ## Results
 
