@@ -99,7 +99,7 @@ class AnchoringTest(AttackTest):
         Test the sampling method with random point selection.
         """
         # Get the negative+advantaged and positive+disadvantaged samples
-        x_neg_adv, x_pos_disadv = anchoring._sample(self.dataset, 'random')
+        x_pos_disadv, x_neg_adv = anchoring._sample(self.dataset, 'random')
 
         # Get the indices of the two samples
         neg_adv_idx = self.get_index(x_neg_adv, self.dataset.X)
@@ -116,7 +116,7 @@ class AnchoringTest(AttackTest):
         Test the sampling method with non-random point selection, using the percentile distance rule for neighbors.
         """
         # Get the negative+advantaged and positive+disadvantaged samples
-        x_neg_adv, x_pos_disadv = anchoring._sample(self.dataset, 'non-random', distances_type='percentile')
+        x_pos_disadv, x_neg_adv = anchoring._sample(self.dataset, 'non-random', distances_type='percentile')
 
         # Get the indices of the two samples
         neg_adv_idx = self.get_index(x_neg_adv, self.dataset.X)
