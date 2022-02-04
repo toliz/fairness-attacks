@@ -6,11 +6,15 @@ from torchmetrics import Metric
 
 
 class SPD(Metric):
-    """
-    A torch metric calculating the statistical parity based on the formula
-    SPD = abs(p(predicted=+1|x in advantaged) - p(predicted=+1|x in disadvantaged))
-    """
     def __init__(self, dist_sync_on_step=False):
+        """
+        A torch metric calculating the statistical parity based on the formula:
+        SPD = abs(p(predicted=+1|x in advantaged) - p(predicted=+1|x in disadvantaged))
+
+        Args:
+            dist_sync_on_step: Synchronize metric state across processes at each forward() before returning the value at
+             the step.
+        """
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
         self.add_state("preds_adv_pos", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -20,9 +24,11 @@ class SPD(Metric):
 
     def update(self, preds: torch.Tensor, adv_mask: torch.BoolTensor):
         """
-        Update the states needed to calculate SPD.
-        :param preds: predictions of model
-        :param adv_mask: advantage mask
+        Update the states needed to calculate the SPD.
+
+        Args:
+            preds: predictions of model
+            adv_mask: advantage mask
         """
 
         # Advantaged and disadvantaged predictions
@@ -39,8 +45,9 @@ class SPD(Metric):
 
     def compute(self):
         """
-        Compute SPD.
-        :return: SPD
+        Computes the SPD based on the current states
+
+        Returns: the SPD
         """
 
         # Probability that the model predicts as positive a data point that has advantage
@@ -57,10 +64,17 @@ class SPD(Metric):
 
 class EOD(Metric):
     """
-    A torch metric calculating the equal opportunity difference based on the formula
-    EOD = abs(p(predicted=+1|x in advantaged, ground_truth=+1) - p(predicted=+1|x in disadvantaged, ground_truth=+1))
+
     """
     def __init__(self, dist_sync_on_step=False):
+        """
+        A torch metric calculating the equal opportunity difference based on the formula:
+        EOD = abs(p(predicted=+1|x in advantaged, ground_truth=+1) - p(predicted=+1|x in disadvantaged, ground_truth=+1))
+
+        Args:
+            dist_sync_on_step: Synchronize metric state across processes at each forward() before returning the value at
+             the step.
+        """
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
         self.add_state("preds_adv_pos", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -70,10 +84,12 @@ class EOD(Metric):
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor, adv_mask: torch.BoolTensor):
         """
-        Update the states needed to calculate EOD.
-        :param preds: predictions of model
-        :param targets: ground truth labels
-        :param adv_mask: advantage mask
+        Update the states needed to calculate the EOD.
+
+        Args:
+            preds: predictions of model
+            targets: ground truth labels
+            adv_mask: advantage mask
         """
 
         # Advantaged and disadvantaged predictions with label +1
@@ -90,8 +106,9 @@ class EOD(Metric):
 
     def compute(self):
         """
-        Compute EOD.
-        :return: EOD
+        Compute the EOD based on the current states.
+
+        Returns:the EOD
         """
 
         # Probability that the model predicts as positive a data point that has advantage and label +1
@@ -100,7 +117,7 @@ class EOD(Metric):
         # Probability that the model predicts as positive a data point that has disadvantage and label +1
         p_dis = self.preds_dis_pos / max(self.num_dis, 1)
 
-        # Calculate EOD
+        # Calculate the EOD
         eod = abs(p_adv - p_dis)
 
         return eod.item()
