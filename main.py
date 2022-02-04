@@ -200,11 +200,6 @@ if __name__ == '__main__':
                         help='Distance type to use')
 
     # Influence Attack
-    parser.add_argument('--fairness_loss',
-                        default='sensitive_cov_boundary',
-                        type=str,
-                        choices=['sensitive_cov_boundary'],
-                        help='Fairness loss to be used in influence attack')
     parser.add_argument('--lamda',
                         default=1,
                         type=float,
