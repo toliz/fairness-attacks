@@ -105,7 +105,6 @@ def cvx_dot(a: Union[cvx.Parameter, cvx.Variable],
 
 
 def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
-    # Extensive docstring
     """
     Build a minimization problem for projecting points onto the feasible set.
     We don't have to assign the exact value of the parameters. We only
