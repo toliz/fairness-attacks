@@ -9,12 +9,16 @@ from typing import Union
 
 def project_point(point: Tensor, point_class: int, beta: dict, minimization_problem: cvx.Problem) -> Tensor:
     """
-    Project point onto feasible set
-    :param point: Point to project
-    :param beta: Defense parameters
-    :param minimization_problem: Minimization problem
-    :param point_class: Class of point
-    :return: Projected point
+    Project point onto feasible set, as originally proposed by Koh et al. (https://arxiv.org/pdf/1811.00741.pdf)
+    This is done by solving the minimization problem argmin_(x in F_b) ||point - x||_2
+
+    Args:
+        point: Point to project
+        beta: Defense parameters
+        minimization_problem: Minimization problem
+        point_class: Class of point
+    
+    Returns: The projected point onto the feasible set.
     """
     # assert all(x'sphere_radii', 'slab_radii', 'centroids', 'centroid_vec') in \
     #           beta.keys(), "['sphere_radii', 'slab_radii', 'centroids', 'centroid_vec'] not in beta"
@@ -23,7 +27,6 @@ def project_point(point: Tensor, point_class: int, beta: dict, minimization_prob
     slab_radii = beta['slab_radii'][point_class]
     center = beta['centroids'][point_class]
     centroid_vec = beta['centroid_vec']
-    # Assign the value of the parameters
     # cvxpy shenanigans to set the value of the parameters
     parameters = minimization_problem.parameters()
     param_index_map = {
@@ -31,8 +34,6 @@ def project_point(point: Tensor, point_class: int, beta: dict, minimization_prob
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        parameters))).items()
     }
-    # assert ('sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar') in param_index_map.keys(), \
-    #     "['sphere_radius', 'slab_radius', 'center', 'centroid_vec', 'x_bar'] params not in the minimization problem"
     # cvxpy shenanigans to get the optimal value of the variable
     variables = minimization_problem.variables()
     variable_index_map = {
@@ -40,8 +41,6 @@ def project_point(point: Tensor, point_class: int, beta: dict, minimization_prob
         for k, v in dict(enumerate(map(lambda l: l.name(),
                                        variables))).items()
     }
-    # assert ('x',) in variable_index_map.keys(), \
-    #     "['x'] variable not in the minimization problem"
     minimization_problem.parameters()[
         param_index_map['sphere_radius']].value = np.array([sphere_radii])
     minimization_problem.parameters()[
@@ -61,6 +60,18 @@ def project_point(point: Tensor, point_class: int, beta: dict, minimization_prob
 
 
 def project_dataset(dataset: Dataset, beta: dict, minimization_problem: cvx.Problem) -> Dataset:
+    """
+    Projects the dataset onto the feasible set. If there are duplicate points,
+    their projection is identical, thus we only need to calculate the
+    projection once.
+
+    Args:
+        dataset: Dataset (D_c \cup D_p)
+        beta: Dictionary of beta values for the feasible set
+        minimization_problem: Minimization problem
+    
+    Returns: Pruned dataset = (D_c \cup D_p) \cap F_b
+    """
     num_features = dataset.X.shape[1]
 
     XY = torch.hstack((dataset.X, dataset.Y.unsqueeze(1)))
@@ -82,19 +93,28 @@ def project_dataset(dataset: Dataset, beta: dict, minimization_problem: cvx.Prob
 def cvx_dot(a: Union[cvx.Parameter, cvx.Variable],
             b: Union[cvx.Parameter, cvx.Variable]) -> cvx.Variable:
     """
-    Returns the dot product of two variables (maybe? I don't know)
-    :param a: First variable
-    :param b: Second variable
-    :return: Dot product of the two variables
+    Returns the dot product of two cvxpy parameters
+
+    Args:
+        param a: First variable
+        param b: Second variable
+    
+    Returns: Dot product of the two variables
     """
     return cvx.sum(cvx.multiply(a, b))
 
 
 def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
     """
-    Build a minimization problem for projecting points onto the feasible set
-    :param dataset: Dataset
-    :return: Minimization problem
+    Build a minimization problem for projecting points onto the feasible set.
+    We don't have to assign the exact value of the parameters. We only
+    have to set up the variables, the parameters, the objective, and the
+    constraints.
+
+    Args:
+        dataset: Dataset
+    
+    Returns: Minimization problem
     """
     if type(dataset.X) is torch.Tensor:
         X = dataset.X.detach().clone().numpy()
@@ -201,9 +221,13 @@ def get_minimization_problem(dataset: Dataset) -> cvx.Problem:
 def defense(dataset: Dataset, beta: dict) -> Dataset:
     """
     Prunes the dataset according to the feasible set.
-    :param dataset: Dataset (D_c \cup D_p)
-    :param beta: Dictionary of beta values for the feasible set
-    :return: Pruned dataset = (D_c \cup D_p) \cap F_b
+    Any point that is not feasible is removed.
+
+    Args:
+        dataset: Dataset (D_c \cup D_p)
+        beta: Dictionary of beta values for the feasible set
+    
+    Returns: Pruned dataset = (D_c \cup D_p) \cap F_b
     """
     if type(dataset.X) is torch.Tensor:
         X, y = dataset.X.detach().clone().numpy(), dataset.Y.detach().clone().numpy()
@@ -236,14 +260,21 @@ def defense(dataset: Dataset, beta: dict) -> Dataset:
     new_adv_mask = old_adv_mask[mask]
     # Create new dataset
     new_dataset = Dataset(X[mask], y[mask], new_adv_mask)
+
     return new_dataset
 
 
 def get_defense_params(dataset: Dataset) -> dict:
     """
-    Get the parameters for the defense
-    :param dataset: Dataset
-    :return: dictionary of parameters
+    Get the parameters for the defense as described in Koh et al. (https://arxiv.org/pdf/1811.00741.pdf)
+    Calculates the sphere_radii, slab_radii, centroids, and centroid_vec.
+    We use the radii such that 90% of the points are within the sphere
+    and the slab respectively.
+
+    Args:
+        dataset: Dataset
+    
+    Returns: dictionary of parameters
     """
     PERCENTILE = 90
     if type(dataset.X) is torch.Tensor:
@@ -273,9 +304,13 @@ def get_defense_params(dataset: Dataset) -> dict:
 
 def get_centroids(dataset: Dataset) -> dict:
     """
-    Returns the centroids of the training data
-    :param dataset: Dataset
-    :return: dictionary of centroids with class as key
+    Returns the centroids of the training data.
+    Centroids are defined as the mean of the points in each class.
+    
+    Args:
+        dataset: Dataset
+    
+    Returns: dictionary of centroids with class as key
     and centroid as value
     """
     if type(dataset.X) is torch.Tensor:
@@ -291,10 +326,15 @@ def get_centroids(dataset: Dataset) -> dict:
 
 def get_centroid_vec(centroids: dict) -> np.ndarray:
     """
-    Returns the centroid vector of the dataset
-    :param centroids: dictionary of centroids with class as key
-    and centroid as value
-    :return: centroid vector
+    Returns the centroid vector of the dataset.
+    Centroid vector is defined as the the vector connecting the
+    centroid of each class.
+    
+    Args:
+        centroids: dictionary of centroids with class as key
+            and centroid as value
+
+    Returns: centroid vector
     """
     centroids_vec = centroids[1] - centroids[0]
     #Normalize the centroid vector
