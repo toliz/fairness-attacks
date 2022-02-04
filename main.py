@@ -107,7 +107,7 @@ def main(args: argparse.Namespace):
         else:
             raise ValueError(f'Unknown dataset {args.dataset}.')
 
-        model = BinaryClassifier(args.model, dm.get_input_size(), lr=1e-3)
+        model = BinaryClassifier(args.model, dm.get_input_size(), lr=1e-3, fairness_metrics_abs=args.fairness_metrics_abs)
 
         # Create a training pipeline for the model
         trainer = pl.Trainer(
@@ -212,6 +212,11 @@ if __name__ == '__main__':
                         default=100,
                         type=int,
                         help='Attack iterations')
+    # metrics
+    parser.add_argument('--fairness_metrics_abs',
+                        default=True,
+                        type=bool,
+                        help='Use the absolute value of the fairness metrics.')
 
     program_args = parser.parse_args()
 

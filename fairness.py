@@ -6,14 +6,15 @@ from torchmetrics import Metric
 
 
 class SPD(Metric):
-    def __init__(self, dist_sync_on_step=False):
+    def __init__(self, dist_sync_on_step=False, use_abs=True):
         """
         A torch metric calculating the statistical parity based on the formula:
         SPD = abs(p(predicted=+1|x in advantaged) - p(predicted=+1|x in disadvantaged))
 
         Args:
             dist_sync_on_step: Synchronize metric state across processes at each forward() before returning the value at
-             the step.
+                the step.
+            use_abs: use the absolute value of the SPD
         """
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
@@ -21,6 +22,8 @@ class SPD(Metric):
         self.add_state("preds_dis_pos", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_adv", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_dis", default=torch.tensor(0), dist_reduce_fx="sum")
+
+        self.use_abs = use_abs
 
     def update(self, preds: torch.Tensor, adv_mask: torch.BoolTensor):
         """
@@ -57,7 +60,9 @@ class SPD(Metric):
         p_dis = self.preds_dis_pos / max(self.num_dis, 1)
 
         # Calculate SPD
-        spd = abs(p_adv - p_dis)
+        spd = p_adv - p_dis
+        if self.use_abs:
+            spd = abs(spd)
 
         return spd.item()
 
@@ -66,14 +71,15 @@ class EOD(Metric):
     """
 
     """
-    def __init__(self, dist_sync_on_step=False):
+    def __init__(self, dist_sync_on_step=False, use_abs=True):
         """
         A torch metric calculating the equal opportunity difference based on the formula:
         EOD = abs(p(predicted=+1|x in advantaged, ground_truth=+1) - p(predicted=+1|x in disadvantaged, ground_truth=+1))
 
         Args:
             dist_sync_on_step: Synchronize metric state across processes at each forward() before returning the value at
-             the step.
+                the step.
+            use_abs: use the absolute value of the EOD
         """
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
@@ -81,6 +87,8 @@ class EOD(Metric):
         self.add_state("preds_dis_pos", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_adv", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("num_dis", default=torch.tensor(0), dist_reduce_fx="sum")
+
+        self.use_abs = use_abs
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor, adv_mask: torch.BoolTensor):
         """
@@ -118,7 +126,9 @@ class EOD(Metric):
         p_dis = self.preds_dis_pos / max(self.num_dis, 1)
 
         # Calculate the EOD
-        eod = abs(p_adv - p_dis)
+        eod = p_adv - p_dis
+        if self.use_abs:
+            eod = abs(eod)
 
         return eod.item()
 

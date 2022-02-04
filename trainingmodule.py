@@ -14,7 +14,8 @@ class BinaryClassifier(pl.LightningModule):
                  model: str,
                  input_size: tuple,
                  lr: float=1e-3,
-                 weight_decay: float=0.09) -> None:
+                 weight_decay: float=0.09,
+                 fairness_metrics_abs: bool=True) -> None:
         """
         A LightningModule for binary classification.
 
@@ -23,6 +24,7 @@ class BinaryClassifier(pl.LightningModule):
             input_size: the size of the input for model
             lr: the learning rate for training
             weight_decay: the weight decay for training
+            fairness_metrics_abs: use of the absolute value of fairness metrics
         """
         super().__init__()
         self.save_hyperparameters()
@@ -33,8 +35,8 @@ class BinaryClassifier(pl.LightningModule):
         else:
             raise ValueError("Unknown model name")
 
-        self.spd = SPD()
-        self.eod = EOD()
+        self.spd = SPD(use_abs=fairness_metrics_abs)
+        self.eod = EOD(use_abs=fairness_metrics_abs)
         self.acc = Accuracy()
         self.loss = nn.BCEWithLogitsLoss()
 
