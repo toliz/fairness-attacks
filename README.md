@@ -70,19 +70,15 @@ python main.py --dataset COMPAS --batch_size 20 ...
 
 The experiments, which reproduce both the work in the original paper and our novel ideas, are located in the [experiments](experiments/) directory as a set of Jupyter Notebooks. More specifically:
 
-- [different-attacks](experiments/different-attacks.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-attacks.ipynb)  reproduces *Figure 2* from the original paper,
-- [different-lambda](experiments/different-lambda.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-lambda.ipynb) reproduces *Figure 3* from the original paper, and
-- [augmentation](experiments/augmentation.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-lambda.ipynb) tests out whether using a negative value for the regularization term can lead to a less biased dataset.
+- [different-attacks](experiments/different-attacks.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/blob/main/experiments/different-attacks.ipynb)  reproduces *Figure 2* from the original paper,
+- [different-lambda](experiments/different-lambda.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/blob/main/experiments/different-lambda.ipynb) reproduces *Figure 3* from the original paper, and
+- [augmentation](experiments/augmentation.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/toliz/FACT-AI/experiments/different-lambda.ipynb) tests out whether using a negative value for the regularization term can lead to a less biased dataset. # Fix links
 
 ## Results
 
 A summary of the results, without the need for model training (which took several days on a Server with a GTX 1080 GPU), can be generated with the notebook [...](?).
 
-![experiment 1](?)
-
-![experiment 2](?)
-
-![experiment 3](?)
+![Results](results/plot_results.ipynb).
 
 ## Contributing
 
