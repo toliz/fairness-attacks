@@ -79,11 +79,11 @@ The experiments, which reproduce both the work in the original paper and our nov
 
 A summary of the results, without the need for model training (which took several days on a Server with a GTX 1080 GPU), can be generated with the notebook [results](results/plot_results.ipynb).
 
-![Experiment 1](results/exp-1.jpg)
+![Experiment 1](results/exp-1.png)
 
-![Experiment 2](results/exp-2.jpg)
+![Experiment 2](results/exp-2.png)
 
-![Experiment 3](results/exp-3.jpg)
+![Experiment 3](results/exp-3.png)
 
 ## Contributing
 
