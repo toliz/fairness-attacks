@@ -54,7 +54,7 @@ def create_poisoned_dataset(
 
         # Create new training pipeline to use in influence attack
         trainer = pl.Trainer(
-            max_epochs=100,
+            max_epochs=args.epochs,
             gpus=1 if torch.cuda.is_available() else 0,
             enable_model_summary=False,
             enable_progress_bar=False,
