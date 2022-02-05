@@ -32,7 +32,6 @@ class Datamodule(pl.LightningDataModule, metaclass=ABCMeta):
         # Path to save/read the file is the data dir and the dataset's unique file name
         self.path_to_file = os.path.join(self.data_dir, self.get_target_file_name())
 
-        # TODO: check whether I need to call these or if PL does it automatically
         self.prepare_data()
         self.setup()
 
